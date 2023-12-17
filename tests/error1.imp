@@ -1,0 +1,35 @@
+# błąd: niezadeklarowana zmienna e w linii 5
+PROCEDURE pa(T a, b) IS
+ c[5],d
+IN
+  c:=e;
+END
+
+PROGRAM IS
+ a[10],b
+IN
+  READ b;
+  pa(a,b);
+  WRITE a[b];
+END
+
+# Jakie mogą być przypadki dla niezadeklarowanej zmiennej?
+# 1. pod zadeklarowaną zmienną podstawiamy niezadeklarowaną zmienną
+# 2. pod niezadeklarowaną zmienną podstawiamy zadeklarowaną zmienną
+# 3. pod niezadeklarowaną zmienną podstawiamy niezadeklarowaną zmienną
+# 4. odczytujemy wartość spod niezadeklarowanej zmiennej
+# 5. wypisujemy wartość spod niezadeklarowanej zmiennej
+# 6. wywołujemy procedurę z niezadeklarowaną zmienną jako argument
+# 7. używamy niezadeklarowanej zmiennej w warunku warunku instrukcji if else
+# 8. używamy niezadeklarowanej zmiennej w warunku warunku instrukcji while do
+# 9. używamy niezadeklarowanej zmiennej w warunku warunku instrukcji repeat until
+# 10. w body instrukcji if else, while i repeat until wszystkie powysze opcje
+
+# Dla Assign sprawdź lewą stronę, a następnie prawą. Dla identifier łatwo, dla array trzeba sprawdzić identyfikator tej
+# tablicy i jej indeks. Może być dany identyfikator w deklaracjach, ale może się odnosić do deklaracji integer a nie array
+# analogicznie dla indeksu, może być zadeklarowany ale nie jako integer, a jako array.
+# Dodatkowo przypadek dla binary operatora
+# Dla Read i Write podobnie, identifier łatwo ale musimy sprawdzić czy jeśli identifier to integer to czy nie używamy go w 
+# kontekscie array. Dla array sprawdzamy identifier i indeks i należy sprawdzić czy identifier odności sie do deklaracji
+# tablicy, a nie integer. Dla indeksu odwrotnie. Dla warunków robimy 1 do 1 jak w przypadku gdy po prawej w assign mamy 
+# binary operator. W wywołaniu procedury sprawdzamy czy podane argumenty są zadeklarowane
