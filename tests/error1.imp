@@ -2,12 +2,13 @@
 PROCEDURE pa(T a, b) IS
  c[5],d
 IN
-  c:=e;
+  a[e]:=c[b]+c[d];
 END
 
 PROGRAM IS
  a[10],b
 IN
+  a[b]:=a[b]+b[a];
   READ b;
   pa(a,b);
   WRITE a[b];
@@ -33,3 +34,7 @@ END
 # kontekscie array. Dla array sprawdzamy identifier i indeks i należy sprawdzić czy identifier odności sie do deklaracji
 # tablicy, a nie integer. Dla indeksu odwrotnie. Dla warunków robimy 1 do 1 jak w przypadku gdy po prawej w assign mamy 
 # binary operator. W wywołaniu procedury sprawdzamy czy podane argumenty są zadeklarowane
+
+#rekord aktywacji procedury, w pamięci tworzymy rekord aktywacji procedury
+#p0 adres powrotu, pozniej zmienne, parametry formalne podajemy przez adres
+#wiecej jedynek niz zer to uzywaj DEC
