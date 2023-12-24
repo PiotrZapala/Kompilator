@@ -36,10 +36,11 @@ class ProcHeadNode(Node):
         self.declarations = declarations
 
 class ProcCallNode(Node):
-    def __init__(self, identifier, args):
+    def __init__(self, identifier, args, line_number):
         super().__init__("ProcCall")
         self.identifier = identifier
         self.args = args
+        self.line_number = line_number        
 
 class IfNode(Node):
     def __init__(self, condition, commands1, commands2):
@@ -52,29 +53,32 @@ class WhileDoNode(Node):
     def __init__(self, condition, commands):
         super().__init__("WhileDo")
         self.condition = condition
-        self.commands = commands 
+        self.commands = commands         
 
 class RepeatUntilNode(Node):
     def __init__(self, commands, condition):
         super().__init__("RepeatUntil")
         self.commands = commands        
-        self.condition = condition
+        self.condition = condition       
 
 class AssignNode(Node):
-    def __init__(self, identifier, expression):
+    def __init__(self, identifier, expression, line_number):
         super().__init__("Assign")
         self.identifier = identifier       
         self.expression = expression
+        self.line_number = line_number        
 
 class WriteNode(Node):
-    def __init__(self, value):
+    def __init__(self, value, line_number):
         super().__init__("Write")
-        self.value = value   
+        self.value = value  
+        self.line_number = line_number         
 
 class ReadNode(Node):
-    def __init__(self, identifier):
+    def __init__(self, identifier, line_number):
         super().__init__("Read")
         self.identifier = identifier     
+        self.line_number = line_number
 
 class BinaryOperatorNode(Node):
     def __init__(self, operator, left, right):
@@ -84,11 +88,12 @@ class BinaryOperatorNode(Node):
         self.right = right
 
 class ConditionOperatorNode(Node):
-    def __init__(self, operator, left, right):
+    def __init__(self, operator, left, right, line_number):
         super().__init__("ConditionOperator")
         self.operator = operator
         self.left = left        
         self.right = right
+        self.line_number = line_number
 
 class ArrayNode(Node):
     def __init__(self, identifier, index):

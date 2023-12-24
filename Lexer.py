@@ -1,6 +1,7 @@
 import ply.lex as lex
 
 class Lexer:
+    
     tokens = (
         'SEMICOLON', 'ASSIGN', 'PLUS', 'MINUS', 'ASTERISK', 'SLASH', 'PERCENT',
         'EQUAL', 'NO_EQUAL', 'LESS', 'GREATER', 'LESS_EQUAL', 'GREATER_EQUAL', 
@@ -9,6 +10,10 @@ class Lexer:
         'IF', 'T', 'ENDIF', 'END', 'ELSE', 'READ', 'WRITE', 'REPEAT', 'UNTIL',
         'NUMBER', 'IDENTIFIER',
     )
+
+    def __init__(self):
+        self.lexer = None
+        self.lineno = 1
     
     def t_LESS_EQUAL(self, t):
         r'<='
@@ -159,18 +164,22 @@ class Lexer:
         r'[_a-z]+'
         t.value = str(t.value)
         return t
-    
-    def t_ignore_COMMENT(self, t):
-        r'\#.*'
-        pass
+
+    def t_NEWLINE(self, t):
+        r'\n+'
+        t.lexer.lineno += len(t.value)
 
     def t_ignore_WHITESPACE(self, t):
-        r'[ \t\r\n]+'
+        r'[ \t\r]+'
+        pass
+
+    def t_ignore_COMMENT(self, t):
+        r'\#.*'
         pass
 
     def t_error(self, t):
         print(f"Illegal character '{t.value[0]}'")
         t.lexer.skip(1)
-
-    def build(self,**kwargs):
+    
+    def build(self, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
