@@ -51,8 +51,9 @@ class Parser:
                    | proc_call SEMICOLON
                    | READ identifier SEMICOLON
                    | WRITE value SEMICOLON"""
+        line_number = p.lexer.lineno
         if p[2] == ':=':
-            p[0] = AssignNode(p[1], p[3])
+            p[0] = AssignNode(p[1], p[3], line_number-1)
         elif p[1] == 'IF':
             if len(p) == 8:
                 p[0] = IfNode(p[2], p[4], p[6])
@@ -63,9 +64,9 @@ class Parser:
         elif p[1] == 'REPEAT':
             p[0] = RepeatUntilNode(p[2], p[4])
         elif p[1] == 'READ':
-            p[0] = ReadNode(p[2])
+            p[0] = ReadNode(p[2], line_number-1)
         elif p[1] == 'WRITE':
-            p[0] = WriteNode(p[2])
+            p[0] = WriteNode(p[2], line_number-1)
         else:
             p[0] = p[1]
 
@@ -75,7 +76,7 @@ class Parser:
 
     def p_proc_call(self, p):
         """proc_call : IDENTIFIER LEFT_BRACKET args RIGHT_BRACKET"""
-        p[0] = ProcCallNode(IdentifierNode(p[1]), p[3])
+        p[0] = ProcCallNode(IdentifierNode(p[1]), p[3], p.lineno)
 
     def p_declarations(self, p):
         """declarations : declarations COMMA IDENTIFIER
@@ -142,7 +143,8 @@ class Parser:
                      | value LESS value
                      | value GREATER_EQUAL value
                      | value LESS_EQUAL value"""
-        p[0] = ConditionOperatorNode(p[2], p[1], p[3])
+        line_number = p.lexer.lineno
+        p[0] = ConditionOperatorNode(p[2], p[1], p[3], line_number)
 
     def p_value(self, p):
         """value : NUMBER
@@ -164,14 +166,8 @@ class Parser:
             p[0] = IdentifierNode(ArrayNode(IdentifierNode(p[1]), IdentifierNode(p[3])))
 
     def p_error(self, p):
-        print(f"Syntax error at line {p.lineno}, position {self.find_column(p)}: Unexpected token '{p.value}'")
+        print(f"Syntax error at line {p.lineno}. Unexpected token '{p.value}'")
         self.parser.errok()
-
-    def find_column(self, p):
-        last_cr = p.lexer.lexdata.rfind('\n', 0, p.lexpos)
-        if last_cr < 0:
-            last_cr = 0
-        return p.lexpos - last_cr + 1
 
     def build(self, **kwargs):
         self.parser = yacc.yacc(module=self, debug=True, **kwargs)

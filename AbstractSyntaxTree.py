@@ -9,7 +9,6 @@ class AbstractSyntaxTree:
         self.arguments_declarations_in_procedures_head = []
         self.list_of_main_program_commands = []
         self.list_of_procedure_commands = []
-        self.errors = []
 
     def traverseTreeForCommands(self):
         main = self.root.main
@@ -81,56 +80,69 @@ class AbstractSyntaxTree:
             if command.node_type == "Assign":
                 identifier = command.identifier
                 expression = command.expression
+                line_number = command.line_number
 
                 expr, ident = self.createAssign(identifier, expression)
 
-                list_of_commands.append({"command type": "Assign", "left side": ident, "right side": expr})
+                list_of_commands.append({"command type": "Assign", "left side": ident, "right side": expr, "line number": line_number})
 
             elif command.node_type == "Read":
                 identifier = command.identifier
+                line_number = command.line_number                
 
                 ident = self.createRead(identifier)
 
-                list_of_commands.append({"command type": "Read", "right side": ident})
+                list_of_commands.append({"command type": "Read", "right side": ident, "line number": line_number})
 
             elif command.node_type == "Write":
                 value = command.value
+                line_number = command.line_number                
 
                 val = self.createWrite(value)
                 
-                list_of_commands.append({"command type": "Write", "right side": val})
+                list_of_commands.append({"command type": "Write", "right side": val, "line number": line_number})
 
             elif command.node_type == "ProcCall":
                 identifier = command.identifier.identifier
                 arguments = command.args.arguments
+                line_number = command.line_number                
 
                 args = self.createProcedureCall(arguments)
 
-                list_of_commands.append({"command type" : "Procedure Call" ,"procedure identifier" : identifier, "arguments" : args})
+                list_of_commands.append({"command type" : "Procedure Call" ,"procedure identifier" : identifier, "arguments" : args, "line number": line_number})
 
             elif command.node_type == "WhileDo":
                 condition = command.condition
                 commands = command.commands.commands
+                line_number = command.condition.line_number
 
                 cond = self.createConditionOrBinaryOperator(condition)
                 commands_in_while = self.getListOfCommands(commands)
 
-                list_of_commands.append({"command type" : "While Do" ,"condition" : cond, "commands": commands_in_while})
+                list_of_commands.append({"command type" : "While Do" ,"condition" : cond, "commands": commands_in_while, "line number": line_number})
 
             elif command.node_type == "RepeatUntil":
-                pass
+                commands = command.commands.commands                
+                condition = command.condition
+                line_number = command.condition.line_number
+
+                commands_in_repeat = self.getListOfCommands(commands)
+                cond = self.createConditionOrBinaryOperator(condition)
+
+                list_of_commands.append({"command type" : "Repeat Until" ,"commands": commands_in_repeat, "condition" : cond, "line number": line_number})
 
             elif command.node_type == "If":
                 condition = command.condition
                 commands1 = command.commands1.commands
+                line_number = command.condition.line_number
                 commands_in_if = self.getListOfCommands(commands1)
                 cond = self.createConditionOrBinaryOperator(condition)
                 if command.commands2 != None:
                     commands2 = command.commands2.commands
                     commands_in_else = self.getListOfCommands(commands2)
-                    list_of_commands.append({"command type" : "If Else" ,"condition" : cond, "if commands" : commands_in_if, "else commands": commands_in_else})                    
+                    list_of_commands.append({"command type" : "If" ,"condition" : cond, "if commands" : commands_in_if, "else commands": commands_in_else, "line number": line_number})                    
                 else: 
-                    list_of_commands.append({"command type" : "If" ,"condition" : cond, "commands": commands_in_if})
+                    list_of_commands.append({"command type" : "If" ,"condition" : cond, "commands": commands_in_if, "line number": line_number})
 
         return list_of_commands
 
