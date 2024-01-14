@@ -142,7 +142,7 @@ class AbstractSyntaxTree:
                     commands_in_else = self.getListOfCommands(commands2)
                     list_of_commands.append({"command type" : "If" ,"condition" : cond, "if commands" : commands_in_if, "else commands": commands_in_else, "line number": line_number})                    
                 else: 
-                    list_of_commands.append({"command type" : "If" ,"condition" : cond, "commands": commands_in_if, "line number": line_number})
+                    list_of_commands.append({"command type" : "If" ,"condition" : cond, "if commands": commands_in_if, "line number": line_number})
 
         return list_of_commands
 

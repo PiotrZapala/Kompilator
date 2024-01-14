@@ -43,23 +43,26 @@ class ProcCallNode(Node):
         self.line_number = line_number        
 
 class IfNode(Node):
-    def __init__(self, condition, commands1, commands2):
+    def __init__(self, condition, commands1, commands2, line_number):
         super().__init__("If")
         self.condition = condition
         self.commands1 = commands1
         self.commands2 = commands2
+        self.line_number = line_number
 
 class WhileDoNode(Node):
-    def __init__(self, condition, commands):
+    def __init__(self, condition, commands, line_number):
         super().__init__("WhileDo")
         self.condition = condition
-        self.commands = commands         
+        self.commands = commands
+        self.line_number = line_number         
 
 class RepeatUntilNode(Node):
-    def __init__(self, commands, condition):
+    def __init__(self, commands, condition, line_number):
         super().__init__("RepeatUntil")
         self.commands = commands        
-        self.condition = condition       
+        self.condition = condition
+        self.line_number = line_number       
 
 class AssignNode(Node):
     def __init__(self, identifier, expression, line_number):

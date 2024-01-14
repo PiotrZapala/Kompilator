@@ -56,13 +56,13 @@ class Parser:
             p[0] = AssignNode(p[1], p[3], line_number-1)
         elif p[1] == 'IF':
             if len(p) == 8:
-                p[0] = IfNode(p[2], p[4], p[6])
+                p[0] = IfNode(p[2], p[4], p[6], line_number-1)
             else:
-                p[0] = IfNode(p[2], p[4], None)
+                p[0] = IfNode(p[2], p[4], None, line_number-1)
         elif p[1] == 'WHILE':
-            p[0] = WhileDoNode(p[2], p[4])
+            p[0] = WhileDoNode(p[2], p[4], line_number-1)
         elif p[1] == 'REPEAT':
-            p[0] = RepeatUntilNode(p[2], p[4])
+            p[0] = RepeatUntilNode(p[2], p[4], line_number-1)
         elif p[1] == 'READ':
             p[0] = ReadNode(p[2], line_number-1)
         elif p[1] == 'WRITE':
@@ -76,7 +76,7 @@ class Parser:
 
     def p_proc_call(self, p):
         """proc_call : IDENTIFIER LEFT_BRACKET args RIGHT_BRACKET"""
-        p[0] = ProcCallNode(IdentifierNode(p[1]), p[3], p.lineno)
+        p[0] = ProcCallNode(IdentifierNode(p[1]), p[3], p.lexer.lineno)
 
     def p_declarations(self, p):
         """declarations : declarations COMMA IDENTIFIER

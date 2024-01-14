@@ -68,7 +68,10 @@ class Debugger:
             elif list_of_commands[i]["command type"] == "If":                   
                 condition = list_of_commands[i]["condition"]
                 if_commands = list_of_commands[i]["if commands"]
-                else_commands = list_of_commands[i]["else commands"]
+                if "else commands" in list_of_commands[i]:
+                    else_commands = list_of_commands[i]["else commands"]
+                else: 
+                    else_commands = None
                 line_number = list_of_commands[i]["line number"]
                 left_side = condition["left"]
                 operator = condition["operator"]
