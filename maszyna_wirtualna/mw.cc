@@ -65,11 +65,12 @@ void run_machine( vector< pair<int,int> > & program )
 
       default: break;
     }
-    cout << r[0] << endl;
-    cout << r[1] << endl;
-    cout << r[2] << endl;
-    cout << r[3] << endl;
-    cout << r[4] << endl;
+    cout << "a " << r[0] << endl;
+    cout << "b " << r[1] << endl;
+    cout << "c " << r[2] << endl;
+    cout << "d " << r[3] << endl;
+    cout << "e " << r[4] << endl;
+    cout << " " << endl;
     if( lr<0 || lr>=(int)program.size() )
     {
       cerr << cRed << "Błąd: Wywołanie nieistniejącej instrukcji nr " << lr << "." << cReset << endl;
