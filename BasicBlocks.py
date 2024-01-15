@@ -68,35 +68,54 @@ class BasicBlock:
         else:
             return "UnknownBlock"
 
-
     def __repr__(self):
         return self.__str__()
 
 class BasicBlocks(BasicBlock):
     
-    def __init__(self):
-        self.procedure_blocks = []
+    def __init__(self, procedure_commands_array, main_commands_array):
+        self.main_program_blocks = []
+        self.procedures_blocks = []
+        self.blocks = []
+        self.procedure_commands_array = procedure_commands_array
+        self.main_commands_array = main_commands_array
 
-    def createBasicBlocks(self, list_of_commands):
-        not_nested_instructions = self.getInstructions(list_of_commands)
+    def createBasicBlocks(self):
+        self.createBasicBlocksForMainProgram()
+        self.createBasicBlocksForProcedures()
+        return self.main_program_blocks, self.procedures_blocks
+
+    def createBasicBlocksForMainProgram(self):
+        self.blocks = []
+        not_nested_instructions = self.getInstructions(self.main_commands_array)
         not_nested_blocks = self.createBlocks(not_nested_instructions)
-        self.procedure_blocks.append(not_nested_blocks)
+        self.blocks.append(not_nested_blocks)
         for i in range(len(not_nested_blocks)):
             if not_nested_blocks[i].type_of_instruction == 'While Do':
                 self.getInstructionsInWhileAndSetJumps(not_nested_blocks[i])   
             if not_nested_blocks[i].type_of_instruction == 'If':
                 self.getInstructionsInIfAndSetJumps(not_nested_blocks[i])
-        consolidated_blocks = self.updateJumps()
-        #consolidated_blocks = self.consolidateBlocks()
-        for block in consolidated_blocks:
-            print(block)
-            print()
-       
+        self.main_program_blocks.append(self.updateJumps())
+
+    def createBasicBlocksForProcedures(self):
+        for j in range(len(self.procedure_commands_array)):
+            list_of_commands = self.procedure_commands_array[j]
+            self.blocks = []
+            not_nested_instructions = self.getInstructions(list_of_commands)
+            not_nested_blocks = self.createBlocks(not_nested_instructions)
+            self.blocks.append(not_nested_blocks)
+            for i in range(len(not_nested_blocks)):
+                if not_nested_blocks[i].type_of_instruction == 'While Do':
+                    self.getInstructionsInWhileAndSetJumps(not_nested_blocks[i])   
+                if not_nested_blocks[i].type_of_instruction == 'If':
+                    self.getInstructionsInIfAndSetJumps(not_nested_blocks[i])
+            self.procedures_blocks.append(self.updateJumps())
+        
     def consolidateBlocks(self):
         consolidated_blocks = []
         block_number = 1
 
-        for block_list in self.procedure_blocks:
+        for block_list in self.blocks:
             current_block = []
             for instruction in block_list:
                 if instruction.type_of_instruction in ['Assign', 'Write', 'Read']:
@@ -121,22 +140,19 @@ class BasicBlocks(BasicBlock):
 
         for block_dict in consolidated_blocks:
             for block_number, instructions in block_dict.items():
-                new_block = {'block_number': block_number, 'instructions': []}
+                new_block = {'block': block_number, 'instructions': []}
 
                 for instruction in instructions:
-                    instruction_info = {
-                        'type_of_instruction': instruction.type_of_instruction,
-                        'instruction': instruction.instruction
-                    }
-                    new_block['instructions'].append(instruction_info)
+                    new_block['instructions'].append(instruction.instruction)
 
                 if instructions[-1].type_of_instruction in ['Assign', 'Write', 'Read']:
                     jump_target = self.findJumpTarget(instructions[-1].first_jump, consolidated_blocks)
+                    new_block['type'] = instructions[-1].type_of_instruction
                     new_block['first_jump'] = jump_target
                 if instructions[-1].type_of_instruction in ['While Do', 'If']:
                     jump_target = self.findJumpTarget(instructions[-1].first_jump, consolidated_blocks)
+                    new_block['type'] = 'Condition'                   
                     new_block['first_jump'] = jump_target
-
                     if instructions[-1].second_jump:
                         second_jump_target = self.findJumpTarget(instructions[-1].second_jump, consolidated_blocks)
                         new_block['second_jump'] = second_jump_target
@@ -155,7 +171,7 @@ class BasicBlocks(BasicBlock):
         condition.commands1 = None
         nested_instructions = self.getInstructions(nested_commands)
         nested_blocks = self.createBlocks(nested_instructions)
-        self.procedure_blocks.append(nested_blocks)
+        self.blocks.append(nested_blocks)
         if nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read']:
             condition.first_jump = nested_blocks[0]
             nested_blocks[0].previous = condition
@@ -191,7 +207,7 @@ class BasicBlocks(BasicBlock):
                 nested_blocks[-1].commands1 = None
                 if_nested_instructions = self.getInstructions(if_nested_commands)
                 if_nested_blocks = self.createBlocks(if_nested_instructions)
-                self.procedure_blocks.append(if_nested_blocks)
+                self.blocks.append(if_nested_blocks)
                 if_nested_blocks[0].previous = nested_blocks[-1]
                 nested_blocks[-1].first_jump = if_nested_blocks[0]
                 if if_nested_blocks[-1].type_of_instruction == 'While Do':
@@ -216,14 +232,14 @@ class BasicBlocks(BasicBlock):
                 nested_blocks[-1].commands1 = None
                 if_nested_instructions = self.getInstructions(if_nested_commands)
                 if_nested_blocks = self.createBlocks(if_nested_instructions)
-                self.procedure_blocks.append(if_nested_blocks)
+                self.blocks.append(if_nested_blocks)
                 if_nested_blocks[0].previous = nested_blocks[-1]
 
                 else_nested_commands = nested_blocks[-1].commands2
                 nested_blocks[-1].commands2 = None
                 else_nested_instructions = self.getInstructions(else_nested_commands)
                 else_nested_blocks = self.createBlocks(else_nested_instructions)
-                self.procedure_blocks.append(else_nested_blocks)
+                self.blocks.append(else_nested_blocks)
                 else_nested_blocks[0].previous = nested_blocks[-1]
                 
                 nested_blocks[-1].first_jump = if_nested_blocks[0]
@@ -272,7 +288,7 @@ class BasicBlocks(BasicBlock):
             condition.commands1 = None
             if_nested_instructions = self.getInstructions(if_nested_commands)
             if_nested_blocks = self.createBlocks(if_nested_instructions)
-            self.procedure_blocks.append(if_nested_blocks)
+            self.blocks.append(if_nested_blocks)
             if_nested_blocks[0].previous = condition
             condition.first_jump = if_nested_blocks[0]
             if len(if_nested_blocks) >= 2:
@@ -301,7 +317,7 @@ class BasicBlocks(BasicBlock):
             condition.commands1 = None
             if_nested_instructions = self.getInstructions(if_nested_commands)
             if_nested_blocks = self.createBlocks(if_nested_instructions)
-            self.procedure_blocks.append(if_nested_blocks)
+            self.blocks.append(if_nested_blocks)
             if_nested_blocks[0].previous = condition
             condition.first_jump = if_nested_blocks[0]
 
@@ -309,7 +325,7 @@ class BasicBlocks(BasicBlock):
             condition.commands2 = None
             else_nested_instructions = self.getInstructions(else_nested_commands)
             else_nested_blocks = self.createBlocks(else_nested_instructions) 
-            self.procedure_blocks.append(else_nested_blocks)
+            self.blocks.append(else_nested_blocks)
             else_nested_blocks[0].previous = condition
             if len(if_nested_blocks) >= 2:
                 for i in range(len(if_nested_blocks)-1):
@@ -466,7 +482,7 @@ class BasicBlocks(BasicBlock):
             if i != len(instructions)-1:
                 if instructions[i].type_of_instruction in ['If'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'While Do', 'If']:
                     if i == 0:
-                        pass
+                        instructions[i].second_jump = instructions[i+1]
                     else:
                         if i+1 <= len(instructions)-1:
                             
@@ -479,35 +495,35 @@ class BasicBlocks(BasicBlock):
 
     def parseAssign(self, command):
         if isinstance(command['left side'], str):
-            if isinstance(command['right side'], str):
-                current_block = (command['left side'], '=', command['right side'])
+            if isinstance(command['right side'], (str,int)):
+                current_block = (command['left side'], ':=', command['right side'])
             else:
                 if len(command['right side']) == 2:
-                    current_block = (command['left side'], '=', command['right side']['identifier'], command['right side']['index'])
+                    current_block = (command['left side'], ':=', command['right side']['identifier'], command['right side']['index'])
                 else:
                     if isinstance(command['right side']['left'], (str,int)) and isinstance(command['right side']['right'], (str,int)):
-                        current_block = (command['left side'], '=', command['right side']['left'], command['right side']['operator'], command['right side']['right'])
+                        current_block = (command['left side'], ':=', command['right side']['left'], command['right side']['operator'], command['right side']['right'])
                     elif isinstance(command['right side']['left'], dict) and isinstance(command['right side']['right'], (str,int)):
-                        current_block = (command['left side'], '=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right'])
+                        current_block = (command['left side'], ':=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right'])
                     elif isinstance(command['right side']['left'], (str,int)) and isinstance(command['right side']['right'], dict):
-                        current_block = (command['left side'], '=', command['right side']['left'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
+                        current_block = (command['left side'], ':=', command['right side']['left'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
                     elif isinstance(command['right side']['left'], dict) and isinstance(command['right side']['right'], dict):
-                        current_block = (command['left side'], '=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
+                        current_block = (command['left side'], ':=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
         else:
-            if isinstance(command['right side'], str):
-                current_block = (command['left side'], '=', command['right side'])
+            if isinstance(command['right side'], (str,int)):
+                current_block = (command['left side']['identifier'], command['left side']['index'], ':=', command['right side'])
             else:
                 if len(command['right side']) == 2:
-                    current_block = (command['left side'], '=', command['right side']['identifier'], command['right side']['index'])
+                    current_block = (command['left side']['identifier'], command['left side']['index'], ':=', command['right side']['identifier'], command['right side']['index'])
                 else:
                     if isinstance(command['right side']['left'], (str,int)) and isinstance(command['right side']['right'], (str,int)):
-                        current_block = (command['left side']['identifier'], command['left side']['index'], '=', command['right side']['left'], command['right side']['operator'], command['right side']['right'])
+                        current_block = (command['left side']['identifier'], command['left side']['index'], ':=', command['right side']['left'], command['right side']['operator'], command['right side']['right'])
                     elif isinstance(command['right side']['left'], dict) and isinstance(command['right side']['right'], (str,int)):
-                        current_block = (command['left side']['identifier'], command['left side']['index'], '=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right'])
+                        current_block = (command['left side']['identifier'], command['left side']['index'], ':=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right'])
                     elif isinstance(command['right side']['left'], (str,int)) and isinstance(command['right side']['right'], dict):
-                        current_block = (command['left side']['identifier'], command['left side']['index'], '=', command['right side']['left'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
+                        current_block = (command['left side']['identifier'], command['left side']['index'], ':=', command['right side']['left'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
                     elif isinstance(command['right side']['left'], dict) and isinstance(command['right side']['right'], dict):
-                        current_block = (command['left side']['identifier'], command['left side']['index'], '=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
+                        current_block = (command['left side']['identifier'], command['left side']['index'], ':=', command['right side']['left']['identifier'], command['right side']['left']['index'], command['right side']['operator'], command['right side']['right']['identifier'], command['right side']['right']['index'])
         return current_block
 
     def parseCondition(self, command):
