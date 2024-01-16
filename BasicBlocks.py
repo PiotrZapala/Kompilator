@@ -147,11 +147,9 @@ class BasicBlocks(BasicBlock):
 
                 if instructions[-1].type_of_instruction in ['Assign', 'Write', 'Read']:
                     jump_target = self.findJumpTarget(instructions[-1].first_jump, consolidated_blocks)
-                    new_block['type'] = instructions[-1].type_of_instruction
                     new_block['first_jump'] = jump_target
                 if instructions[-1].type_of_instruction in ['While Do', 'If']:
-                    jump_target = self.findJumpTarget(instructions[-1].first_jump, consolidated_blocks)
-                    new_block['type'] = 'Condition'                   
+                    jump_target = self.findJumpTarget(instructions[-1].first_jump, consolidated_blocks)                 
                     new_block['first_jump'] = jump_target
                     if instructions[-1].second_jump:
                         second_jump_target = self.findJumpTarget(instructions[-1].second_jump, consolidated_blocks)
@@ -539,12 +537,12 @@ class BasicBlocks(BasicBlock):
         return current_block
     
     def parseWrite(self, command):
-        return (command['right side'])
+        return ('Write', command['right side'])
 
     def parseRead(self, command):
         current_block = ()
         if isinstance(command['right side'], (str,int)):
-            current_block = (command['right side'])
+            current_block = ('Read', command['right side'])
         elif isinstance(command['right side'], dict):
-            current_block = (command['right side']['identifier'], command['right side']['index'])
+            current_block = ('Read', command['right side']['identifier'], command['right side']['index'])
         return current_block     

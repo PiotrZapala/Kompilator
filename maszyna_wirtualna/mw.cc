@@ -38,7 +38,6 @@ void run_machine( vector< pair<int,int> > & program )
   io = 0;
   while( program[lr].first!=HALT )	// HALT
   {
-    cout << program[lr].first << endl;
     switch( program[lr].first )
     {
       case READ:	cout << "? "; cin >> r[0]; io+=100; lr++; break;
@@ -82,7 +81,7 @@ void run_machine( vector< pair<int,int> > & program )
     cout << " " << endl;
     cout << "h " << r[7] << endl;
     cout << " " << endl;
-    for(int i = 0; i < 19; i++) {
+    for(int i = 0; i < 29; i++) {
       cout << pam[i] << " ";
     }
     

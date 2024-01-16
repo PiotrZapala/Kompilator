@@ -5,7 +5,7 @@ from BasicBlocks import BasicBlocks
 from AssemblyCode import AssemblyCode
 
 def main():
-    with open("tests/program2.imp", "r") as file:
+    with open("testy/test2.imp", "r") as file:
         data = file.read()
     parser = Parser()
     parser.build()
@@ -25,7 +25,5 @@ def main():
     ASM = AssemblyCode(main_program_blocks, declarations_in_main, procedures_blocks, declarations_in_procedures, procedures_head)
     ASM.createAssemblyCode()
     
-
-
 if __name__ == "__main__":
     main()

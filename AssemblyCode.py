@@ -30,6 +30,20 @@ class AssemblyCode:
         self.procedures_basic_blocks = procedures_basic_blocks
         self.declarations_in_procedures = declarations_in_procedures
         self.procedures_head = procedures_head
+        self.main_program_variables = []
+        self.global_space_counter = 0
+    
+    def generate_number(self, number, register):
+        assembly_code = []
+        binary_representation = bin(number)[2:]
+
+        for i, bit in enumerate(binary_representation):
+            if bit == '1':
+                assembly_code.append(Instructions.INC.value + " " + register)
+            if i < len(binary_representation) - 1:
+                assembly_code.append(Instructions.SHL.value + " " + register)
+
+        return assembly_code
 
     def createAssemblyCode(self):
         #self.getAssemblyCodeFromProcedureBlocks()
@@ -44,31 +58,45 @@ class AssemblyCode:
             print()
 
     def getAssemblyCodeFromMainProgramBlocks(self):
+        for i in range(len(self.declarations_in_main)):
+            variable = {}
+            if isinstance(self.declarations_in_main[i]['identifier'], str):
+                variable['variable_'+str(i+1)] = self.declarations_in_main[i]['identifier']
+                variable['initialized'] = False
+                variable['place_in_memory'] = None
+            elif isinstance(self.declarations_in_main[i]['identifier'], dict):
+                variable['variable_'+str(i+1)] = (self.declarations_in_main[i]['identifier']['identifier'], self.declarations_in_main[i]['identifier']['range'])
+                variable['initialized'] = False
+                variable['place_in_memory'] = self.declarations_in_main[i]['identifier']['range']
+                self.global_space_counter = variable['place_in_memory']              
+            self.main_program_variables.append(variable)
         for block in self.program_basic_blocks[0]:
-            print(block)
-            block_instructions = block['instructions']
-            #self.identifyTypeOfInstructions(block_instructions)
-        print()
+            assembly_code_for_one_block = self.identifyTypeOfInstructions(block)
+            block['instructions'] = assembly_code_for_one_block
+        for instruction in block['instructions']:
+            for code in instruction:
+                print(code)
 
-    def identifyTypeOfInstructions(self, block_instructions):
+    def identifyTypeOfInstructions(self, block):
+        block_instructions = block['instructions']
         assembly_code_for_one_block = []
         for instruction in block_instructions:
-            if instruction.type == 'Assign':
+            if ':=' in instruction:
                 if instruction[1] == ':=':
                     assembly_code = self.assignToIntegerVariable(instruction)
                 elif instruction[2] == ':=':
                     assembly_code = self.assignToArrayVariable(instruction)
-            elif instruction.type == 'Write':
+            elif 'Write' in instruction:
                 if len(instruction) == 1:
                     assembly_code = self.writeIntegerVariable(instruction)
                 elif len(instruction) == 2:
                     assembly_code = self.writeArrayVariable(instruction)
-            elif instruction.type == 'Read':
+            elif 'Read' in instruction:
                 if len(instruction) == 1:
                     assembly_code = self.readToIntegerVariable(instruction)
                 elif len(instruction) == 2:
                     assembly_code = self.readToArrayVariable(instruction)
-            elif instruction.type == 'Condition':
+            else:
                 if len(instruction) == 3:
                     assembly_code = self.checkConditionForTwoIntegerVariables(instruction)
                 elif len(instruction) == 4:
@@ -106,29 +134,406 @@ class AssemblyCode:
         return assembly_code
 
     def toIntegerVariableAssignIntegerVariable(self, instruction):
-        pass
+        assembly_code = []
+        if isinstance(instruction[2], int):
+            for var in self.main_program_variables:
+                if instruction[0] in var.values():
+                    variable1 = var
+                    break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+                variable1['place_in_memory'] = self.global_space_counter
+                self.global_space_counter += 1
+            place_in_memory = variable1['place_in_memory']
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            ins = self.generate_number(place_in_memory, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.extend(self.generate_number(instruction[2], "a"))
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+
+        elif isinstance(instruction[2], str):
+            for var in self.main_program_variables:
+                if instruction[0] in var.values():
+                    variable1 = var
+                    break
+            for var in self.main_program_variables:
+                if instruction[2] in var.values():
+                    variable2 = var
+                    break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+                variable1['place_in_memory'] = self.global_space_counter
+                self.global_space_counter += 1
+            place_in_memory_of_variable1 = variable1['place_in_memory']
+            place_in_memory_of_variable2 = variable2['place_in_memory']
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            ins = self.generate_number(place_in_memory_of_variable2, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.LOAD.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            ins = self.generate_number(place_in_memory_of_variable1, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+
+        return assembly_code
 
     def toIntegerVariableAssignArrayVariable(self, instruction):
-        pass
+        assembly_code = []
+        if isinstance(instruction[3], int):
+            for var in self.main_program_variables:
+                if instruction[0] in var.values():
+                    variable1 = var
+                    break
+            for var in self.main_program_variables:
+                if isinstance(list(var.values())[0], tuple):
+                    if list(var.values())[0][0] == instruction[0]:
+                        variable2 = var
+                        break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+                variable1['place_in_memory'] = self.global_space_counter
+                self.global_space_counter += 1
+            place_in_memory = variable1['place_in_memory']
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            ins = self.generate_number(place_in_memory, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.extend(self.generate_number(instruction[3], "a"))
+            assembly_code.append(Instructions.LOAD.value + " " + "a")
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+
+        elif isinstance(instruction[3], str):
+            for var in self.main_program_variables:
+                if instruction[0] in var.values():
+                    variable1 = var
+                    break
+            for var in self.main_program_variables:
+                if instruction[3] in var.values():
+                    variable2 = var
+                    break
+            for var in self.main_program_variables:
+                if isinstance(list(var.values())[0], tuple):
+                    if list(var.values())[0][0] == instruction[0]:
+                        variable3 = var
+                        break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+                variable1['place_in_memory'] = self.global_space_counter
+                self.global_space_counter += 1
+            place_in_memory_of_variable1 = variable1['place_in_memory']
+            place_in_memory_of_variable2 = variable2['place_in_memory']
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.RST.value + " " + "c")
+            ins = self.generate_number(place_in_memory_of_variable1, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            ins = self.generate_number(place_in_memory_of_variable2, "c")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.LOAD.value + " " + "c")
+            assembly_code.append(Instructions.PUT.value + " " + "c")
+            assembly_code.append(Instructions.LOAD.value + " " + "c")
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+
+        return assembly_code
 
     def toIntegerVariableAssignBinaryOperationOfTwoIntegerVariables(self, instruction):
+        assembly_code = []
         if instruction[3] == '+':
-            pass
+            if isinstance(instruction[2], int) and isinstance(instruction[4], int):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory = variable1['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                ins = self.generate_number(instruction[2], "a")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                ins = self.generate_number(instruction[4], "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.ADD.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+
+            elif isinstance(instruction[2], int) and isinstance(instruction[4], str):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[4] in var.values():
+                        variable2 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory_of_variable1 = variable1['place_in_memory']
+                place_in_memory_of_variable2 = variable2['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                assembly_code.append(Instructions.RST.value + " " + "c")
+                ins = self.generate_number(instruction[2], "c")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                ins = self.generate_number(place_in_memory_of_variable2, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.ADD.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable1, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+
+            elif isinstance(instruction[2], str) and isinstance(instruction[4], int):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[2] in var.values():
+                        variable2 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory_of_variable1 = variable1['place_in_memory']
+                place_in_memory_of_variable2 = variable2['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                assembly_code.append(Instructions.RST.value + " " + "c")
+                ins = self.generate_number(instruction[4], "c")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                ins = self.generate_number(place_in_memory_of_variable2, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.ADD.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable1, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+
+            elif isinstance(instruction[2], str) and isinstance(instruction[4], str):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[2] in var.values():
+                        variable2 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[4] in var.values():
+                        variable3 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory_of_variable1 = variable1['place_in_memory']
+                place_in_memory_of_variable2 = variable2['place_in_memory']
+                place_in_memory_of_variable3 = variable3['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                assembly_code.append(Instructions.RST.value + " " + "c")
+                ins = self.generate_number(place_in_memory_of_variable3, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.PUT.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable2, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.ADD.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable1, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+
         elif instruction[3] == '-':
-            pass
+            if isinstance(instruction[2], int) and isinstance(instruction[4], int):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory = variable1['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                ins = self.generate_number(instruction[2], "a")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                ins = self.generate_number(instruction[4], "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.SUB.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+
+            elif isinstance(instruction[2], int) and isinstance(instruction[4], str):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[4] in var.values():
+                        variable2 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory_of_variable1 = variable1['place_in_memory']
+                place_in_memory_of_variable2 = variable2['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                assembly_code.append(Instructions.RST.value + " " + "c")
+                ins = self.generate_number(instruction[2], "c")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                ins = self.generate_number(place_in_memory_of_variable2, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.SUB.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable1, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+
+            elif isinstance(instruction[2], str) and isinstance(instruction[4], int):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[2] in var.values():
+                        variable2 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory_of_variable1 = variable1['place_in_memory']
+                place_in_memory_of_variable2 = variable2['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                assembly_code.append(Instructions.RST.value + " " + "c")
+                ins = self.generate_number(instruction[4], "c")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                ins = self.generate_number(place_in_memory_of_variable2, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.SUB.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable1, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+
+            elif isinstance(instruction[2], str) and isinstance(instruction[4], str):
+                for var in self.main_program_variables:
+                    if instruction[0] in var.values():
+                        variable1 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[2] in var.values():
+                        variable2 = var
+                        break
+                for var in self.main_program_variables:
+                    if instruction[4] in var.values():
+                        variable3 = var
+                        break
+                if variable1['initialized'] == False:
+                    variable1['initialized'] = True
+                    variable1['place_in_memory'] = self.global_space_counter
+                    self.global_space_counter += 1
+                place_in_memory_of_variable1 = variable1['place_in_memory']
+                place_in_memory_of_variable2 = variable2['place_in_memory']
+                place_in_memory_of_variable3 = variable3['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                assembly_code.append(Instructions.RST.value + " " + "c")
+                ins = self.generate_number(place_in_memory_of_variable3, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.PUT.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable2, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.LOAD.value + " " + "b")
+                assembly_code.append(Instructions.SUB.value + " " + "c")
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                ins = self.generate_number(place_in_memory_of_variable1, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
+                
         elif instruction[3] == '*':
             pass
         elif instruction[3] == '/':
             pass        
         elif instruction[3] == '%':
             pass
+        return assembly_code
 
     def toIntegerVariableAssignBinaryOperationOfIntegerAndArrayVariables(self, instruction):
         if instruction[3] in ['+', '-', '*', '/', '%']:
             if instruction[3] == '+':
-                pass
+                if isinstance(instruction[2], int) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[2], int) and isinstance(instruction[5], str):
+                    pass
+                elif isinstance(instruction[2], str) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[2], str) and isinstance(instruction[5], str):
+                    pass
             elif instruction[3] == '-':
-                pass
+                if isinstance(instruction[2], int) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[2], int) and isinstance(instruction[5], str):
+                    pass
+                elif isinstance(instruction[2], str) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[2], str) and isinstance(instruction[5], str):
+                    pass
             elif instruction[3] == '*':
                 pass
             elif instruction[3] == '/':
@@ -137,9 +542,23 @@ class AssemblyCode:
                 pass
         elif instruction[4] in ['+', '-', '*', '/', '%']:
             if instruction[4] == '+':
-                pass
+                if isinstance(instruction[3], int) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[3], int) and isinstance(instruction[5], str):
+                    pass
+                elif isinstance(instruction[3], str) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[3], str) and isinstance(instruction[5], str):
+                    pass
             elif instruction[4] == '-':
-                pass
+                if isinstance(instruction[3], int) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[3], int) and isinstance(instruction[5], str):
+                    pass
+                elif isinstance(instruction[3], str) and isinstance(instruction[5], int):
+                    pass
+                elif isinstance(instruction[3], str) and isinstance(instruction[5], str):
+                    pass
             elif instruction[4] == '*':
                 pass
             elif instruction[4] == '/':
@@ -149,9 +568,23 @@ class AssemblyCode:
 
     def toIntegerVariableAssignBinaryOperationOfTwoArraysVariables(self, instruction):
         if instruction[4] == '+':
-            pass
+            if isinstance(instruction[3], int) and isinstance(instruction[6], int):
+                pass
+            elif isinstance(instruction[3], int) and isinstance(instruction[6], str):
+                pass
+            elif isinstance(instruction[3], str) and isinstance(instruction[6], int):
+                pass
+            elif isinstance(instruction[3], str) and isinstance(instruction[6], str):
+                pass
         elif instruction[4] == '-':
-            pass
+            if isinstance(instruction[3], int) and isinstance(instruction[6], int):
+                pass
+            elif isinstance(instruction[3], int) and isinstance(instruction[6], str):
+                pass
+            elif isinstance(instruction[3], str) and isinstance(instruction[6], int):
+                pass
+            elif isinstance(instruction[3], str) and isinstance(instruction[6], str):
+                pass
         elif instruction[4] == '*':
             pass
         elif instruction[4] == '/':
@@ -160,7 +593,109 @@ class AssemblyCode:
             pass
 
     def toArrayVariableAssignIntegerVariable(self, instruction):
-        pass
+        assembly_code = []
+        if isinstance(instruction[1], int) and isinstance(instruction[3], int):
+            for var in self.main_program_variables:
+                if isinstance(list(var.values())[0], tuple):
+                    if list(var.values())[0][0] == instruction[0]:
+                        variable1 = var
+                        break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            ins = self.generate_number(instruction[1], "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            ins = self.generate_number(instruction[3], "a")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+                        
+        elif isinstance(instruction[1], int) and isinstance(instruction[3], str):
+            for var in self.main_program_variables:
+                if isinstance(list(var.values())[0], tuple):
+                    if list(var.values())[0][0] == instruction[0]:
+                        variable1 = var
+                        break
+            for var in self.main_program_variables:
+                if instruction[3] in var.values():
+                    variable2 = var
+                    break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+            place_in_memory_of_variable2 = variable2['place_in_memory']
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            ins = self.generate_number(instruction[1], "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            ins = self.generate_number(place_in_memory_of_variable2, "a")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.LOAD.value + " " + "a")
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+
+        elif isinstance(instruction[1], str) and isinstance(instruction[3], int):
+            for var in self.main_program_variables:
+                if isinstance(list(var.values())[0], tuple):
+                    if list(var.values())[0][0] == instruction[0]:
+                        variable1 = var
+                        break
+            for var in self.main_program_variables:
+                if instruction[1] in var.values():
+                    variable2 = var
+                    break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+            place_in_memory_of_variable2 = variable2['place_in_memory']
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.RST.value + " " + "c")
+            ins = self.generate_number(instruction[3], "c")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            ins = self.generate_number(place_in_memory_of_variable2, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.LOAD.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.GET.value + " " + "c")
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+
+        elif isinstance(instruction[1], str) and isinstance(instruction[3], str):
+            for var in self.main_program_variables:
+                if isinstance(list(var.values())[0], tuple):
+                    if list(var.values())[0][0] == instruction[0]:
+                        variable1 = var
+                        break
+            for var in self.main_program_variables:
+                if instruction[1] in var.values():
+                    variable2 = var
+                    break
+            for var in self.main_program_variables:
+                if instruction[3] in var.values():
+                    variable3 = var
+                    break
+            if variable1['initialized'] == False:
+                variable1['initialized'] = True
+            place_in_memory_of_variable2 = variable2['place_in_memory']
+            place_in_memory_of_variable3 = variable3['place_in_memory']
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.RST.value + " " + "c")
+            ins = self.generate_number(place_in_memory_of_variable2, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            ins = self.generate_number(place_in_memory_of_variable3, "c")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.LOAD.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.LOAD.value + " " + "c")
+            assembly_code.append(Instructions.STORE.value + " " + "b")  
+
+        return assembly_code
 
     def toArrayVariableAssignArrayVariable(self, instruction):
         pass
