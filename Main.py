@@ -21,6 +21,8 @@ def main():
     #DEB.programDebugger(main_commands_array, declarations_in_main, procedure_commands_array, declarations_in_procedures, procedures_head)
     BLOCKS = BasicBlocks(procedure_commands_array, main_commands_array)
     main_program_blocks, procedures_blocks = BLOCKS.createBasicBlocks()
+    #for block in procedures_blocks[0]:
+        #print(block)
 
     ASM = AssemblyCode(main_program_blocks, declarations_in_main, procedures_blocks, declarations_in_procedures, procedures_head)
     ASM.createAssemblyCode()
