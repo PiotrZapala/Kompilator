@@ -157,9 +157,9 @@ class AssemblyCode:
                 if len(instruction) == 3:
                     assembly_code = self.checkConditionForTwoIntegerVariables(instruction, type, block)
                 elif len(instruction) == 4:
-                    assembly_code = self.checkConditionForIntegerAndArrayVariables(instruction, type)
+                    assembly_code = self.checkConditionForIntegerAndArrayVariables(instruction, type, block)
                 elif len(instruction) == 5:
-                    assembly_code = self.checkConditionForTwoArrayVariables(instruction, type)
+                    assembly_code = self.checkConditionForTwoArrayVariables(instruction, type, block)
             assembly_code_for_one_block.append(assembly_code)
         return assembly_code_for_one_block
     
@@ -1407,50 +1407,403 @@ class AssemblyCode:
                 assembly_code.append(Instructions.ADD.value + " " + "e")
                 assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump']))
                 assembly_code.append("block " + str(block['first_jump']))
-                
+
         return assembly_code
 
-    def checkConditionForIntegerAndArrayVariables(self, instruction, type):
+    def checkConditionForIntegerAndArrayVariables(self, instruction, type, block):
+        assembly_code = []
         if instruction[1] in ['=', '<', '>', '<=', '>=', '!=']:
             if instruction[1] == '=':
-                pass
+                if isinstance(instruction[0], int):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2],  instruction[3], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[0], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.PUT.value + " " + "c")    
+                    assembly_code.append(Instructions.SUB.value + " " + "b") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[0], str):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2],  instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "d")
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[0], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "c")    
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "d") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
             elif instruction[1] == '<':
-                pass
+                if isinstance(instruction[0], int):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[0], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.PUT.value + " " + "c")    
+                    assembly_code.append(Instructions.SUB.value + " " + "b") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "c") 
+                    assembly_code.append(Instructions.DEC.value + " " + "b")
+                    assembly_code.append(Instructions.SUB.value + " " + "b")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[0], str):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "d")
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[0], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "c")    
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "c") 
+                    assembly_code.append(Instructions.DEC.value + " " + "d")
+                    assembly_code.append(Instructions.SUB.value + " " + "d")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
             elif instruction[1] == '>':
-                pass
+                if isinstance(instruction[0], int):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[0], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.SUB.value + " " + "b")    
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[0], str):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "d")
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[0], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.SUB.value + " " + "d")    
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append("block " + str(block['first_jump']))
+
             elif instruction[1] == '<=':
-                pass
+                if isinstance(instruction[0], int):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.RST.value + " " + "a")               
+                    ins = self.generate_number(instruction[0], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)  
+                    assembly_code.append(Instructions.SUB.value + " " + "b") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[0], str):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "d")           
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[0], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
             elif instruction[1] == '>=':
-                pass
+                if isinstance(instruction[0], int):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "a")
+                    assembly_code.append(Instructions.RST.value + " " + "b")
+                    ins = self.generate_number(instruction[0], "b")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)                
+                    assembly_code.append(Instructions.SUB.value + " " + "b") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[0], str):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "d")
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[0], type, assembly_code, "a", "b")  
+                    assembly_code.append(Instructions.PUT.value + " " + "b")
+                    assembly_code.append(Instructions.GET.value + " " + "d")           
+                    assembly_code.append(Instructions.SUB.value + " " + "b") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
             elif instruction[1] == '!=':
-                pass
+                if isinstance(instruction[0], int):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.GET.value + " " + "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "d")   
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[0], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.PUT.value + " " + "c")    
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.PUT.value + " " + "e")
+                    assembly_code.append(Instructions.GET.value + " " + "d") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.ADD.value + " " + "e")
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[0], str):
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[2], instruction[3], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.GET.value + " " + "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "d")   
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[0], type, assembly_code, "a", "b")  
+                    assembly_code.append(Instructions.PUT.value + " " + "c")    
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.PUT.value + " " + "e")
+                    assembly_code.append(Instructions.GET.value + " " + "d") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.ADD.value + " " + "e")
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
         elif instruction[2] in ['=', '<', '>', '<=', '>=', '!=']:
             if instruction[2] == '=':
-                pass
-            elif instruction[2] == '<':
-                pass
-            elif instruction[2] == '>':
-                pass
-            elif instruction[2] == '<=':
-                pass
-            elif instruction[2] == '>=':
-                pass
-            elif instruction[2] == '!=':
-                pass
+                if isinstance(instruction[3], int):
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[3], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.PUT.value + " " + "d")   
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "c")  
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "d") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
 
-    def checkConditionForTwoArrayVariables(self, instruction, type):
+                elif isinstance(instruction[3], str):
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "d")   
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "c")  
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "d") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+            elif instruction[2] == '<':
+                if isinstance(instruction[3], int):
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[3], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.PUT.value + " " + "d") 
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "c")  
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "c") 
+                    assembly_code.append(Instructions.DEC.value + " " + "d")
+                    assembly_code.append(Instructions.SUB.value + " " + "d")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[3], str):
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "d")   
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.PUT.value + " " + "c")  
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append(Instructions.GET.value + " " + "c") 
+                    assembly_code.append(Instructions.DEC.value + " " + "d")
+                    assembly_code.append(Instructions.SUB.value + " " + "d")
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+            elif instruction[2] == '>':
+                if isinstance(instruction[3], int):
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[3], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.PUT.value + " " + "c")
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")    
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append("block " + str(block['first_jump'])) 
+
+                elif isinstance(instruction[3], str):
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[2], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "c")
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")    
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump'])) 
+                    assembly_code.append("block " + str(block['first_jump'])) 
+
+            elif instruction[2] == '<=':
+                if isinstance(instruction[3], int):
+                    assembly_code.append(Instructions.RST.value + " " + "a")               
+                    ins = self.generate_number(instruction[3], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins) 
+                    assembly_code.append(Instructions.PUT.value + " " + "c") 
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[3], str):
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "c") 
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+            elif instruction[2] == '>=':
+                if isinstance(instruction[3], int):
+                    assembly_code.append(Instructions.RST.value + " " + "c")
+                    ins = self.generate_number(instruction[3], "c")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)       
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.GET.value + " " + "c")          
+                    assembly_code.append(Instructions.SUB.value + " " + "b") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[3], str):
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "c")       
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b") 
+                    assembly_code.append(Instructions.GET.value + " " + "c")          
+                    assembly_code.append(Instructions.SUB.value + " " + "b") 
+                    assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+            elif instruction[2] == '!=':
+                if isinstance(instruction[3], int):
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generate_number(instruction[3], "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.PUT.value + " " + "d")  
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "c")   
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.PUT.value + " " + "e")
+                    assembly_code.append(Instructions.GET.value + " " + "d") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.ADD.value + " " + "e")
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+                elif isinstance(instruction[3], str):
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[3], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "d")  
+                    assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+                    assembly_code.append(Instructions.GET.value + " " + "b")
+                    assembly_code.append(Instructions.PUT.value + " " + "c")   
+                    assembly_code.append(Instructions.SUB.value + " " + "d") 
+                    assembly_code.append(Instructions.PUT.value + " " + "e")
+                    assembly_code.append(Instructions.GET.value + " " + "d") 
+                    assembly_code.append(Instructions.SUB.value + " " + "c")
+                    assembly_code.append(Instructions.ADD.value + " " + "e")
+                    assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump']))
+                    assembly_code.append("block " + str(block['first_jump']))
+
+        return assembly_code
+
+    def checkConditionForTwoArrayVariables(self, instruction, type, block):
         if instruction[2] == '=':
-            pass
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[3], instruction[4], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "d")   
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b") 
+            assembly_code.append(Instructions.PUT.value + " " + "c")  
+            assembly_code.append(Instructions.SUB.value + " " + "d") 
+            assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+            assembly_code.append(Instructions.GET.value + " " + "d") 
+            assembly_code.append(Instructions.SUB.value + " " + "c")
+            assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+            assembly_code.append("block " + str(block['first_jump']))
+
         elif instruction[2] == '<':
-            pass
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[3], instruction[4], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "d")   
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b") 
+            assembly_code.append(Instructions.PUT.value + " " + "c")  
+            assembly_code.append(Instructions.SUB.value + " " + "d") 
+            assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump'])) 
+            assembly_code.append(Instructions.GET.value + " " + "c") 
+            assembly_code.append(Instructions.DEC.value + " " + "d")
+            assembly_code.append(Instructions.SUB.value + " " + "d")
+            assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+            assembly_code.append("block " + str(block['first_jump']))
+        
         elif instruction[2] == '>':
-            pass
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[3], instruction[4], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "c")
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b") 
+            assembly_code.append(Instructions.SUB.value + " " + "c")    
+            assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump'])) 
+            assembly_code.append("block " + str(block['first_jump'])) 
+
         elif instruction[2] == '<=':
-            pass
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[3], instruction[4], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "c") 
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b") 
+            assembly_code.append(Instructions.SUB.value + " " + "c") 
+            assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+            assembly_code.append("block " + str(block['first_jump']))
+
         elif instruction[2] == '>=':
-            pass
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[3], instruction[4], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "c")       
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b") 
+            assembly_code.append(Instructions.GET.value + " " + "c")          
+            assembly_code.append(Instructions.SUB.value + " " + "b") 
+            assembly_code.append(Instructions.JPOS.value + " " + "block " + str(block['second_jump']))
+            assembly_code.append("block " + str(block['first_jump']))
+
         elif instruction[2] == '!=':
-            pass
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[3], instruction[4], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "d")  
+            assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "c")   
+            assembly_code.append(Instructions.SUB.value + " " + "d") 
+            assembly_code.append(Instructions.PUT.value + " " + "e")
+            assembly_code.append(Instructions.GET.value + " " + "d") 
+            assembly_code.append(Instructions.SUB.value + " " + "c")
+            assembly_code.append(Instructions.ADD.value + " " + "e")
+            assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump']))
+            assembly_code.append("block " + str(block['first_jump']))
 
     def callProcedure(self, instruction, type):
         assembly_code = []

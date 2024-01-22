@@ -526,7 +526,7 @@ class BasicBlocks(BasicBlock):
         current_block = ()
         if isinstance(command['left'], (str,int)) and isinstance(command['right'], (str,int)):
             current_block = (command['left'], command['operator'], command['right'])
-        elif isinstance(command['left'], str) and isinstance(command['right'], dict):
+        elif isinstance(command['left'], (str,int)) and isinstance(command['right'], dict):
             current_block = (command['left'], command['operator'], command['right']['identifier'], command['right']['index'])
         elif isinstance(command['left'], dict) and isinstance(command['right'], (str,int)):
             current_block = (command['left']['identifier'], command['left']['index'], command['operator'], command['right'])
