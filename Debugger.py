@@ -227,50 +227,51 @@ class Debugger:
                 for z in range(len(head_of_procedure)):
                     is_array = head_of_procedure[z]['argument']['isArray']
                     args.append(is_array)
-        for i in range(len(list_of_arguments)):
-            argument = list_of_arguments[i]['argument ' + str(i+1)]
-            is_declared_identifier = False
-            is_correct_type = False
-            for j in range(len(declarations)):
-                ident = declarations[j]["identifier"]
-                if isinstance(ident, dict):
-                    if argument == ident["identifier"] and args[i] == True:
-                        is_declared_identifier = True
-                        is_correct_type = True
-                    elif argument == ident["identifier"] and args[i] == False:
-                        is_declared_identifier = True
-                        is_correct_type = False
-                elif isinstance(ident, str):
-                    if argument == ident and args[i] == False:
-                        is_declared_identifier = True
-                        is_correct_type = True
-                    elif argument == ident and args[i] == True:
-                        is_declared_identifier = True
-                        is_correct_type = False
+        if len(args) != 0:
+            for i in range(len(list_of_arguments)):
+                argument = list_of_arguments[i]['argument ' + str(i+1)]
+                is_declared_identifier = False
+                is_correct_type = False
+                for j in range(len(declarations)):
+                    ident = declarations[j]["identifier"]
+                    if isinstance(ident, dict):
+                        if argument == ident["identifier"] and args[i] == True:
+                            is_declared_identifier = True
+                            is_correct_type = True
+                        elif argument == ident["identifier"] and args[i] == False:
+                            is_declared_identifier = True
+                            is_correct_type = False
+                    elif isinstance(ident, str):
+                        if argument == ident and args[i] == False:
+                            is_declared_identifier = True
+                            is_correct_type = True
+                        elif argument == ident and args[i] == True:
+                            is_declared_identifier = True
+                            is_correct_type = False
 
-            is_passed_identifier_in_proc_head = False
-            is_correct_type_in_proc_head = False
-            if len(arguments_declarations) == 0:
                 is_passed_identifier_in_proc_head = False
-            else:
-                for z in range(len(arguments_declarations)):
-                    argument_from_declarations = arguments_declarations[z]["argument"]
-                    ident = argument_from_declarations["identifier"] 
-                    is_arr = argument_from_declarations["isArray"] 
-                    if argument == ident and args[i] == is_arr:
-                        if is_passed_identifier_in_proc_head == False and is_correct_type_in_proc_head == False:
-                            is_passed_identifier_in_proc_head = True
-                            is_correct_type_in_proc_head = True
-                    elif argument == ident and args[i] != is_arr:
-                        if is_passed_identifier_in_proc_head == False and is_correct_type_in_proc_head == False:
-                            is_passed_identifier_in_proc_head = True
-                            is_correct_type_in_proc_head = False
+                is_correct_type_in_proc_head = False
+                if len(arguments_declarations) == 0:
+                    is_passed_identifier_in_proc_head = False
+                else:
+                    for z in range(len(arguments_declarations)):
+                        argument_from_declarations = arguments_declarations[z]["argument"]
+                        ident = argument_from_declarations["identifier"] 
+                        is_arr = argument_from_declarations["isArray"] 
+                        if argument == ident and args[i] == is_arr:
+                            if is_passed_identifier_in_proc_head == False and is_correct_type_in_proc_head == False:
+                                is_passed_identifier_in_proc_head = True
+                                is_correct_type_in_proc_head = True
+                        elif argument == ident and args[i] != is_arr:
+                            if is_passed_identifier_in_proc_head == False and is_correct_type_in_proc_head == False:
+                                is_passed_identifier_in_proc_head = True
+                                is_correct_type_in_proc_head = False
 
 
-            if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
-                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an undeclared variable " +  "\'" + str(argument) + "\'") 
-            elif is_correct_type == False and is_correct_type_in_proc_head == False:
-                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an incorrect use of variable " +  "\'" + str(argument) + "\'") 
+                if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
+                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an undeclared variable " +  "\'" + str(argument) + "\'") 
+                elif is_correct_type == False and is_correct_type_in_proc_head == False:
+                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an incorrect use of variable " +  "\'" + str(argument) + "\'") 
 
 
     def checkForUndeclaredVariablesInRead(self, declarations, arguments_declarations, right_side, line_number):
