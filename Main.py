@@ -5,7 +5,7 @@ from BasicBlocks import BasicBlocks
 from AssemblyCode import AssemblyCode
 
 def main():
-    with open("testy/test2.imp", "r") as file:
+    with open("tests/error8.imp", "r") as file:
         data = file.read()
     parser = Parser()
     parser.build()
@@ -18,14 +18,11 @@ def main():
     main_commands_array, procedure_commands_array = AST.traverseTreeForCommands()
     #AST.printMainProgram(declarations_in_main, main_commands_array)
     #AST.printProcedures(procedures_head, declarations_in_procedures, procedure_commands_array)
-    #DEB.programDebugger(main_commands_array, declarations_in_main, procedure_commands_array, declarations_in_procedures, procedures_head)
-    BLOCKS = BasicBlocks(procedure_commands_array, main_commands_array)
-    main_program_blocks, procedures_blocks = BLOCKS.createBasicBlocks()
-    #for block in procedures_blocks[0]:
-        #print(block)
-
-    ASM = AssemblyCode(main_program_blocks, declarations_in_main, procedures_blocks, declarations_in_procedures, procedures_head)
-    ASM.createAssemblyCode()
+    DEB.programDebugger(main_commands_array, declarations_in_main, procedure_commands_array, declarations_in_procedures, procedures_head)
+    #BLOCKS = BasicBlocks(procedure_commands_array, main_commands_array)
+    #main_program_blocks, procedures_blocks = BLOCKS.createBasicBlocks()
+    #ASM = AssemblyCode(main_program_blocks, declarations_in_main, procedures_blocks, declarations_in_procedures, procedures_head)
+    #ASM.createAssemblyCode()
     
 if __name__ == "__main__":
-    main()
+    main()   

@@ -5,14 +5,15 @@ class Debugger:
         self.warnings = []
 
     def programDebugger(self, main_commands_array, decl_in_main, procedure_commands_array, decl_in_procedures,  procedures_head):
-        self.checkIfThereAreUndeclaredVariables(main_commands_array, decl_in_main, None)
+        self.checkPossibleErrorsInCommands(main_commands_array, decl_in_main, None, procedures_head, 'main')
         if len(self.errors) != 0:
             print("In Main Program there are some issues:")
             for k in range(len(self.errors)):
                 print(self.errors[k])
+        self.errors = []
         length_of_errors = len(self.errors)
         for i in range(len(procedures_head)):
-            self.checkIfThereAreUndeclaredVariables(procedure_commands_array[i], decl_in_procedures[i], procedures_head[i])
+            self.checkPossibleErrorsInCommands(procedure_commands_array[i], decl_in_procedures[i], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])       
             if len(self.errors) != 0:
                 print("In procedure:", "\'" + procedures_head[i]["procedure identifier"] + "\'" + " there are some issues:")
                 for j in range(length_of_errors, len(self.errors)):
@@ -20,7 +21,7 @@ class Debugger:
             length_of_errors = len(self.errors)
 
 
-    def checkIfThereAreUndeclaredVariables(self, list_of_commands, declarations, head):
+    def checkPossibleErrorsInCommands(self, list_of_commands, declarations, head, procedures_head, type):
         if head != None:
             arguments_declarations = head["arguments declarations"]
         else:
@@ -43,7 +44,12 @@ class Debugger:
                 self.checkForUndeclaredVariablesInWrite(declarations, arguments_declarations, right_side, line_number)
 
             elif list_of_commands[i]["command type"] == "Procedure Call":                   
-                pass
+                identifier = list_of_commands[i]['procedure identifier']
+                list_of_arguments = list_of_commands[i]['arguments']
+                line_number = list_of_commands[i]['line number']
+                self.checkWhetherTheCalledProcedureExistsAndWhetherItsUseIsCorrect(identifier, procedures_head, line_number, list_of_arguments, type)
+                self.checkForUndeclaredVariablesAndIfTypeIsCorrectInProcCall(declarations, arguments_declarations, identifier, list_of_arguments, procedures_head, line_number)
+
 
             elif list_of_commands[i]["command type"] == "While Do":                   
                 condition = list_of_commands[i]["condition"]
@@ -53,7 +59,7 @@ class Debugger:
                 operator = condition["operator"]
                 right_side = condition["right"]
                 self.checkForUndeclaredVariablesInCondition(declarations, arguments_declarations, left_side, right_side, operator, line_number)
-                self.checkIfThereAreUndeclaredVariables(commands, declarations, head)
+                self.checkPossibleErrorsInCommands(commands, declarations, head, procedures_head, type)
 
             elif list_of_commands[i]["command type"] == "Repeat Until":                   
                 condition = list_of_commands[i]["condition"]
@@ -62,7 +68,7 @@ class Debugger:
                 left_side = condition["left"]
                 operator = condition["operator"]
                 right_side = condition["right"]
-                self.checkIfThereAreUndeclaredVariables(commands, declarations, head)                
+                self.checkPossibleErrorsInCommands(commands, declarations, head, procedures_head, type)                
                 self.checkForUndeclaredVariablesInCondition(declarations, arguments_declarations, left_side, right_side, operator, line_number)
 
             elif list_of_commands[i]["command type"] == "If":                   
@@ -78,12 +84,11 @@ class Debugger:
                 right_side = condition["right"]
                 if else_commands != None:
                     self.checkForUndeclaredVariablesInCondition(declarations, arguments_declarations, left_side, right_side, operator, line_number)
-                    self.checkIfThereAreUndeclaredVariables(if_commands, declarations, head)
-                    self.checkIfThereAreUndeclaredVariables(else_commands, declarations, head)
+                    self.checkPossibleErrorsInCommands(if_commands, declarations, head, procedures_head, type)
+                    self.checkPossibleErrorsInCommands(else_commands, declarations, head, procedures_head, type)
                 else:
                     self.checkForUndeclaredVariablesInCondition(declarations, arguments_declarations, left_side, right_side, operator, line_number)
-                    self.checkIfThereAreUndeclaredVariables(if_commands, declarations, head)
-
+                    self.checkPossibleErrorsInCommands(if_commands, declarations, head, procedures_head, type)
 
     def checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(self, declarations, arguments_declarations, identifier, ident_can_be_int):
         is_declared_identifier = False
@@ -168,6 +173,105 @@ class Debugger:
             is_correct_type = True
 
         return is_declared_array_identifier, is_passed_array_identifier_in_proc_head, is_correct_type  
+    
+    def checkWhetherTheCalledProcedureExistsAndWhetherItsUseIsCorrect(self, identifier, procedures, line_number, list_of_arguments, type):
+        proc_call = identifier + "("
+        for j in range(len(list_of_arguments)):
+            argument = list_of_arguments[j]['argument ' + str(j+1)]
+            proc_call += argument
+            if j < len(list_of_arguments)-1:
+                proc_call += ", "
+        proc_call += ")"
+        if type == 'main':
+            for i in range(len(procedures)):
+                is_procedure_exists_for_main = False
+                procedure_identifier = procedures[i]['procedure identifier']
+                if type == 'main':
+                    if identifier == procedure_identifier:
+                        is_procedure_exists_for_main = True
+                        break
+            if is_procedure_exists_for_main == False:
+                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " undeclared procedure is called") 
+        else:
+            for i in range(len(procedures)):
+                is_procedure_exists_for_procedure = False
+                is_correct_use = False
+                procedure_identifier = procedures[i]['procedure identifier']
+                if identifier == procedure_identifier:
+                    if identifier == type:
+                        is_procedure_exists_for_procedure = True
+                        is_correct_use = False
+                        break
+                    else:
+                        is_procedure_exists_for_procedure = True
+                        is_correct_use = True
+                        break
+                    
+            if is_procedure_exists_for_procedure == False and is_correct_use == False:
+                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " undeclared procedure is called") 
+            elif is_procedure_exists_for_procedure == True and is_correct_use == False:
+                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " invalid procedure is called")
+
+    def checkForUndeclaredVariablesAndIfTypeIsCorrectInProcCall(self, declarations, arguments_declarations, identifier, list_of_arguments, procedures_head, line_number):
+        proc_call = identifier + "("
+        for j in range(len(list_of_arguments)):
+            argument = list_of_arguments[j]['argument ' + str(j+1)]
+            proc_call += argument
+            if j < len(list_of_arguments)-1:
+                proc_call += ", "
+        proc_call += ")"
+        args = []
+        for j in range(len(procedures_head)):
+            if identifier == procedures_head[j]['procedure identifier']:
+                head_of_procedure = procedures_head[j]['arguments declarations']
+                for z in range(len(head_of_procedure)):
+                    is_array = head_of_procedure[z]['argument']['isArray']
+                    args.append(is_array)
+        for i in range(len(list_of_arguments)):
+            argument = list_of_arguments[i]['argument ' + str(i+1)]
+            is_declared_identifier = False
+            is_correct_type = False
+            for j in range(len(declarations)):
+                ident = declarations[j]["identifier"]
+                if isinstance(ident, dict):
+                    if argument == ident["identifier"] and args[i] == True:
+                        is_declared_identifier = True
+                        is_correct_type = True
+                    elif argument == ident["identifier"] and args[i] == False:
+                        is_declared_identifier = True
+                        is_correct_type = False
+                elif isinstance(ident, str):
+                    if argument == ident and args[i] == False:
+                        is_declared_identifier = True
+                        is_correct_type = True
+                    elif argument == ident and args[i] == True:
+                        is_declared_identifier = True
+                        is_correct_type = False
+
+            is_passed_identifier_in_proc_head = False
+            is_correct_type_in_proc_head = False
+            if len(arguments_declarations) == 0:
+                is_passed_identifier_in_proc_head = False
+            else:
+                for z in range(len(arguments_declarations)):
+                    argument_from_declarations = arguments_declarations[z]["argument"]
+                    ident = argument_from_declarations["identifier"] 
+                    is_arr = argument_from_declarations["isArray"] 
+                    if argument == ident and args[i] == is_arr:
+                        if is_passed_identifier_in_proc_head == False and is_correct_type_in_proc_head == False:
+                            is_passed_identifier_in_proc_head = True
+                            is_correct_type_in_proc_head = True
+                    elif argument == ident and args[i] != is_arr:
+                        if is_passed_identifier_in_proc_head == False and is_correct_type_in_proc_head == False:
+                            is_passed_identifier_in_proc_head = True
+                            is_correct_type_in_proc_head = False
+
+
+            if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
+                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an undeclared variable " +  "\'" + str(argument) + "\'") 
+            elif is_correct_type == False and is_correct_type_in_proc_head == False:
+                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an incorrect use of variable " +  "\'" + str(argument) + "\'") 
+
 
     def checkForUndeclaredVariablesInRead(self, declarations, arguments_declarations, right_side, line_number):
         if isinstance(right_side, str):
