@@ -2,24 +2,13 @@
 PROCEDURE pa(T a, b) IS
  c[5],d
 IN
-  a:=e;
-  WHILE a>c DO
-    REPEAT
-      IF c[b]>e[a] THEN
-        c[c]:=e[a]%b[d];
-      ELSE
-        a[e]:=e+a;
-      ENDIF
-      a[c]:=c[b];
-    UNTIL c[b]>a[a];
-  ENDWHILE
+  c:=e;
 END
 
 PROGRAM IS
  a[10],b
 IN
-  a:=b;
-  WRITE a;
+  READ b;
   pa(a,b);
   WRITE a[b];
 END

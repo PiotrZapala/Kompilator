@@ -5,7 +5,7 @@ from BasicBlocks import BasicBlocks
 from AssemblyCode import AssemblyCode
 
 def main():
-    with open("tests/error8.imp", "r") as file:
+    with open("tests/error6.imp", "r") as file:
         data = file.read()
     parser = Parser()
     parser.build()

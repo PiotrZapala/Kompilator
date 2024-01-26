@@ -43,15 +43,16 @@ class AbstractSyntaxTree:
         for procedure in procedures_array:
             if procedure.declarations != None:
                 declarations_array = procedure.declarations.declarations
+                line_number = procedure.declarations.line_number
                 variable_declarations_in_procedure = []
                 for declaration in declarations_array:
                     if declaration.node_type == "Identifier":
                         identifier = declaration.identifier
-                        variable_declarations_in_procedure.append({"identifier" : identifier})
+                        variable_declarations_in_procedure.append({"identifier" : identifier, "line number": line_number})
                     elif declaration.node_type == "Array":
                         identifier = declaration.identifier.identifier
                         range = declaration.index.number
-                        variable_declarations_in_procedure.append({"identifier" : {"identifier" : identifier, "range" :range}})
+                        variable_declarations_in_procedure.append({"identifier" : {"identifier" : identifier, "range" :range}, "line number": line_number})
                     else:
                         raise ValueError("Invalid variable declaration type!")
                 self.variable_declarations_in_procedures.append(variable_declarations_in_procedure)

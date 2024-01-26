@@ -13,13 +13,13 @@ class Debugger:
         self.errors = []
         length_of_errors = len(self.errors)
         for i in range(len(procedures_head)):
+            self.checkNameConflicts(decl_in_procedures[i], procedures_head[i])
             self.checkPossibleErrorsInCommands(procedure_commands_array[i], decl_in_procedures[i], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])       
             if len(self.errors) != 0:
                 print("In procedure:", "\'" + procedures_head[i]["procedure identifier"] + "\'" + " there are some issues:")
                 for j in range(length_of_errors, len(self.errors)):
                     print(self.errors[j])
             length_of_errors = len(self.errors)
-
 
     def checkPossibleErrorsInCommands(self, list_of_commands, declarations, head, procedures_head, type):
         if head != None:
@@ -89,6 +89,27 @@ class Debugger:
                 else:
                     self.checkForUndeclaredVariablesInCondition(declarations, arguments_declarations, left_side, right_side, operator, line_number)
                     self.checkPossibleErrorsInCommands(if_commands, declarations, head, procedures_head, type)
+       
+    def checkNameConflicts(self, decl_in_procedures,  procedures_head):
+        args = []
+        head = []
+        is_conflict = False
+        line_number = decl_in_procedures[0]['line number']
+        for i in range(len(decl_in_procedures)):
+            if isinstance(decl_in_procedures[i]['identifier'], str):
+                args.append(decl_in_procedures[i]['identifier'])
+            elif isinstance(decl_in_procedures[i]['identifier'], dict):
+                args.append(decl_in_procedures[i]['identifier']['identifier'])
+        for i in range(len(procedures_head['arguments declarations'])):
+            head.append(procedures_head['arguments declarations'][i]['argument']['identifier'])
+        for i in range(len(args)):
+            for j in range(len(head)):
+                if args[i] == head[j]:
+                    is_conflict = True
+                    break
+
+        if is_conflict == True:
+            self.errors.append("ERROR: There is a variable name conflict in line " + str(line_number)) 
 
     def checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(self, declarations, arguments_declarations, identifier, ident_can_be_int):
         is_declared_identifier = False
@@ -817,7 +838,8 @@ class Debugger:
                     if is_correct_type_of_index_right == True:
                         self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared index " +  "\'" + str(index_right) + "\'" + " " + "of an array")
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_right) + "\'")                        
+                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_right) + "\'")   
+                                             
             elif len(right_side) == 3:
                 left_side_of_right_side = right_side["left"]
                 right_side_of_right_side = right_side["right"]
