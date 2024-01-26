@@ -83,8 +83,9 @@ class Parser:
                         | declarations COMMA IDENTIFIER LEFT_SQUARE_BRACKET NUMBER RIGHT_SQUARE_BRACKET
                         | IDENTIFIER
                         | IDENTIFIER LEFT_SQUARE_BRACKET NUMBER RIGHT_SQUARE_BRACKET"""
+        line_number = p.lexer.lineno
         if len(p) == 2:
-            p[0] = DeclarationsNode()
+            p[0] = DeclarationsNode(line_number)
             p[0].addDeclaration(IdentifierNode(p[1]))
         elif len(p) == 4:
             p[0] = p[1]
@@ -93,7 +94,7 @@ class Parser:
             p[0] = p[1]
             p[0].addDeclaration(ArrayNode(IdentifierNode(p[3]), NumberNode(p[5])))
         elif len(p) == 5:
-            p[0] = DeclarationsNode()
+            p[0] = DeclarationsNode(line_number)
             p[0].addDeclaration(ArrayNode(IdentifierNode(p[1]), NumberNode(p[3])))
 
     def p_args_decl(self, p):

@@ -137,7 +137,6 @@ class BasicBlocks(BasicBlock):
     def updateJumps(self):
         updated_blocks = []
         consolidated_blocks = self.consolidateBlocks()
-
         for block_dict in consolidated_blocks:
             for block_number, instructions in block_dict.items():
                 new_block = {'block': block_number, 'instructions': []}
@@ -319,7 +318,7 @@ class BasicBlocks(BasicBlock):
             self.blocks.append(if_nested_blocks)
             if_nested_blocks[0].previous = condition
             condition.first_jump = if_nested_blocks[0]
-
+            
             else_nested_commands = condition.commands2
             condition.commands2 = None
             else_nested_instructions = self.getInstructions(else_nested_commands)
@@ -332,73 +331,67 @@ class BasicBlocks(BasicBlock):
                         self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
                     elif if_nested_blocks[i].type_of_instruction in ['If']:
                         self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])  
-            if condition.second_jump != None:
-                if if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
-                    if_nested_blocks[-1].first_jump = condition.second_jump
-                    else_nested_blocks[-1].first_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]
 
-                elif if_nested_blocks[-1].type_of_instruction in ['While Do'] and else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
-                    if_nested_blocks[-1].second_jump = condition.second_jump
-                    else_nested_blocks[-1].first_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]
-                    self.getInstructionsInWhileAndSetJumps(if_nested_blocks[-1])
+            if if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
+                if_nested_blocks[-1].first_jump = condition.second_jump
+                else_nested_blocks[-1].first_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]
 
-                elif if_nested_blocks[-1].type_of_instruction in ['If'] and else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
-                    if_nested_blocks[-1].second_jump = condition.second_jump
-                    else_nested_blocks[-1].first_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]                    
-                    self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])
+            elif if_nested_blocks[-1].type_of_instruction in ['While Do'] and else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
+                if_nested_blocks[-1].second_jump = condition.second_jump
+                else_nested_blocks[-1].first_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]
+                self.getInstructionsInWhileAndSetJumps(if_nested_blocks[-1])
 
-
-                elif if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and else_nested_blocks[-1].type_of_instruction in ['While Do']:
-                    if_nested_blocks[-1].first_jump = condition.second_jump
-                    else_nested_blocks[-1].second_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]
-                    self.getInstructionsInWhileAndSetJumps(else_nested_blocks[-1])
-
-                elif if_nested_blocks[-1].type_of_instruction in ['While Do'] and else_nested_blocks[-1].type_of_instruction in ['While Do']:
-                    if_nested_blocks[-1].second_jump = condition.second_jump
-                    else_nested_blocks[-1].second_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]
-                    self.getInstructionsInWhileAndSetJumps(if_nested_blocks[-1])
-                    self.getInstructionsInWhileAndSetJumps(else_nested_blocks[-1])
-
-                elif if_nested_blocks[-1].type_of_instruction in ['If'] and else_nested_blocks[-1].type_of_instruction in ['While Do']:
-                    if_nested_blocks[-1].second_jump = condition.second_jump
-                    else_nested_blocks[-1].second_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]                    
-                    self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])
-                    self.getInstructionsInWhileAndSetJumps(else_nested_blocks[-1])  
+            elif if_nested_blocks[-1].type_of_instruction in ['If'] and else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
+                if_nested_blocks[-1].second_jump = condition.second_jump
+                else_nested_blocks[-1].first_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]                    
+                self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])
 
 
-                elif if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and else_nested_blocks[-1].type_of_instruction in ['If']:
-                    if_nested_blocks[-1].first_jump = condition.second_jump
-                    else_nested_blocks[-1].second_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]
-                    self.getInstructionsInifAndSetJumps(else_nested_blocks[-1])
+            elif if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and else_nested_blocks[-1].type_of_instruction in ['While Do']:
+                if_nested_blocks[-1].first_jump = condition.second_jump
+                else_nested_blocks[-1].second_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]
+                self.getInstructionsInWhileAndSetJumps(else_nested_blocks[-1])
 
-                elif if_nested_blocks[-1].type_of_instruction in ['While Do'] and else_nested_blocks[-1].type_of_instruction in ['If']:
-                    if_nested_blocks[-1].second_jump = condition.second_jump
-                    else_nested_blocks[-1].second_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]
-                    self.getInstructionsInWhileAndSetJumps(if_nested_blocks[-1])
-                    self.getInstructionsInIfAndSetJumps(else_nested_blocks[-1])
+            elif if_nested_blocks[-1].type_of_instruction in ['While Do'] and else_nested_blocks[-1].type_of_instruction in ['While Do']:
+                if_nested_blocks[-1].second_jump = condition.second_jump
+                else_nested_blocks[-1].second_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]
+                self.getInstructionsInWhileAndSetJumps(if_nested_blocks[-1])
+                self.getInstructionsInWhileAndSetJumps(else_nested_blocks[-1])
 
-                elif if_nested_blocks[-1].type_of_instruction in ['If'] and else_nested_blocks[-1].type_of_instruction in ['If']:
-                    if_nested_blocks[-1].second_jump = condition.second_jump
-                    else_nested_blocks[-1].second_jump = condition.second_jump
-                    condition.second_jump = else_nested_blocks[0]                    
-                    self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])
-                    self.getInstructionsInIfAndSetJumps(else_nested_blocks[-1])                    
+            elif if_nested_blocks[-1].type_of_instruction in ['If'] and else_nested_blocks[-1].type_of_instruction in ['While Do']:
+                if_nested_blocks[-1].second_jump = condition.second_jump
+                else_nested_blocks[-1].second_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]                    
+                self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])
+                self.getInstructionsInWhileAndSetJumps(else_nested_blocks[-1])  
+
+
+            elif if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and else_nested_blocks[-1].type_of_instruction in ['If']:
+                if_nested_blocks[-1].first_jump = condition.second_jump
+                else_nested_blocks[-1].second_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]
+                self.getInstructionsInIfAndSetJumps(else_nested_blocks[-1])
+
+            elif if_nested_blocks[-1].type_of_instruction in ['While Do'] and else_nested_blocks[-1].type_of_instruction in ['If']:
+                if_nested_blocks[-1].second_jump = condition.second_jump
+                else_nested_blocks[-1].second_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]
+                self.getInstructionsInWhileAndSetJumps(if_nested_blocks[-1])
+                self.getInstructionsInIfAndSetJumps(else_nested_blocks[-1])
+
+            elif if_nested_blocks[-1].type_of_instruction in ['If'] and else_nested_blocks[-1].type_of_instruction in ['If']:
+                if_nested_blocks[-1].second_jump = condition.second_jump
+                else_nested_blocks[-1].second_jump = condition.second_jump
+                condition.second_jump = else_nested_blocks[0]                    
+                self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])
+                self.getInstructionsInIfAndSetJumps(else_nested_blocks[-1])                    
                   
-            else:   
-                if if_nested_blocks[-1].type_of_instruction in ['While Do']:
-                    self.getInstructionsInWhileAndSetJumps(if_nested_blocks[-1])
-                elif if_nested_blocks[-1].type_of_instruction in ['If']:
-                    self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])                   
     
-
     def getInstructions(self, list_of_commands):
         not_nested_instructions = []
         for i, command in enumerate(list_of_commands):
@@ -533,7 +526,7 @@ class BasicBlocks(BasicBlock):
         current_block = ()
         if isinstance(command['left'], (str,int)) and isinstance(command['right'], (str,int)):
             current_block = (command['left'], command['operator'], command['right'])
-        elif isinstance(command['left'], str) and isinstance(command['right'], dict):
+        elif isinstance(command['left'], (str,int)) and isinstance(command['right'], dict):
             current_block = (command['left'], command['operator'], command['right']['identifier'], command['right']['index'])
         elif isinstance(command['left'], dict) and isinstance(command['right'], (str,int)):
             current_block = (command['left']['identifier'], command['left']['index'], command['operator'], command['right'])

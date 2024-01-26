@@ -140,9 +140,10 @@ class CommandsNode(Node):
         self.commands.append(command)
     
 class DeclarationsNode(Node):
-    def __init__(self):
+    def __init__(self, line_number):
         super().__init__("Declarations")
         self.declarations = []
+        self.line_number = line_number
 
     def addDeclaration(self, declaration):
         self.declarations.append(declaration)
