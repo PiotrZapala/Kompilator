@@ -23,6 +23,7 @@ class BasicBlock:
     def create_if_block(cls, type_of_instruction, is_first, is_last, previous, first_jump, second_jump, instruction, commands1, commands2):
         return cls(type_of_instruction, is_first, is_last, previous, first_jump, second_jump, instruction, commands1, commands2)
 
+
     def __str__(self):
         if self.type_of_instruction == 'Assign':
             return (f"AssignBlock(type_of_instruction={self.type_of_instruction}, "
@@ -92,7 +93,12 @@ class BasicBlocks(BasicBlock):
         self.blocks.append(not_nested_blocks)
         for i in range(len(not_nested_blocks)):
             if not_nested_blocks[i].type_of_instruction == 'While Do':
-                self.getInstructionsInWhileAndSetJumps(not_nested_blocks[i])   
+                self.getInstructionsInWhileAndSetJumps(not_nested_blocks[i]) 
+            if not_nested_blocks[i].type_of_instruction == 'Repeat Until':
+                if i != 0:
+                    self.getInstructionsInRepeatUntilAndSetJumps(not_nested_blocks[i], not_nested_blocks[i-1])
+                else:
+                    self.getInstructionsInRepeatUntilAndSetJumps(not_nested_blocks[i], None)                
             if not_nested_blocks[i].type_of_instruction == 'If':
                 self.getInstructionsInIfAndSetJumps(not_nested_blocks[i])
         self.main_program_blocks.append(self.updateJumps())
@@ -114,7 +120,6 @@ class BasicBlocks(BasicBlock):
     def consolidateBlocks(self):
         consolidated_blocks = []
         block_number = 1
-
         for block_list in self.blocks:
             current_block = []
             for instruction in block_list:
@@ -147,7 +152,7 @@ class BasicBlocks(BasicBlock):
                 if instructions[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
                     jump_target = self.findJumpTarget(instructions[-1].first_jump, consolidated_blocks)
                     new_block['first_jump'] = jump_target
-                if instructions[-1].type_of_instruction in ['While Do', 'If']:
+                if instructions[-1].type_of_instruction in ['While Do', 'Repeat Until', 'If']:
                     jump_target = self.findJumpTarget(instructions[-1].first_jump, consolidated_blocks)                 
                     new_block['first_jump'] = jump_target
                     if instructions[-1].second_jump:
@@ -163,6 +168,54 @@ class BasicBlocks(BasicBlock):
             if jump in list(block_dict.values())[0]:
                 return list(block_dict.keys())[0]
         return None
+    
+    def getInstructionsInRepeatUntilAndSetJumps(self, condition, previous):
+        if previous != None:
+            nested_commands = condition.commands1
+            condition.commands1 = None
+            nested_instructions = self.getInstructions(nested_commands)
+            nested_blocks = self.createBlocks(nested_instructions)
+            previous.first_jump = nested_blocks[0]
+            if nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
+                condition.first_jump = nested_blocks[0]
+                nested_blocks[0].previous = previous
+                nested_blocks[-1].first_jump = condition
+                self.blocks.append(nested_blocks)
+                if len(nested_blocks) >= 2:
+                    for i in range(len(nested_blocks)-1):
+                        if nested_blocks[i].type_of_instruction in ['While Do']:
+                            self.getInstructionsInWhileAndSetJumps(nested_blocks[i])
+                        elif nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                            self.getInstructionsInRepeatUntilAndSetJumps(nested_blocks[i], nested_blocks[i-1])                        
+                        elif nested_blocks[i].type_of_instruction in ['If']:
+                            self.getInstructionsInIfAndSetJumps(nested_blocks[i])
+            elif nested_blocks[-1].type_of_instruction in ['While Do']:
+                condition.first_jump = nested_blocks[0]
+                nested_blocks[0].previous = previous
+                nested_blocks[-1].second_jump = condition
+                self.getInstructionsInWhileAndSetJumps(nested_blocks[-1])  
+                self.blocks.append(nested_blocks)
+                if len(nested_blocks) >= 2:
+                    for i in range(len(nested_blocks)-1):
+                        if nested_blocks[i].type_of_instruction in ['While Do']:
+                            self.getInstructionsInWhileAndSetJumps(nested_blocks[i])    
+                        elif nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                            self.getInstructionsInRepeatUntilAndSetJumps(nested_blocks[i], nested_blocks[i-1])   
+                        elif nested_blocks[i].type_of_instruction in ['If']:
+                            self.getInstructionsInIfAndSetJumps(nested_blocks[i])
+
+        else:                 
+            nested_commands = condition.commands1
+            condition.commands1 = None
+            nested_instructions = self.getInstructions(nested_commands)
+            nested_blocks = self.createBlocks(nested_instructions)
+            index = self.blocks[0].index(condition)
+            self.blocks.insert(index, nested_blocks)
+            if nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
+                condition.first_jump = nested_blocks[0]
+                nested_blocks[0].previous = previous
+                nested_blocks[-1].first_jump = condition
+
 
     def getInstructionsInWhileAndSetJumps(self, condition):
         nested_commands = condition.commands1
@@ -454,7 +507,7 @@ class BasicBlocks(BasicBlock):
         i = 0
         while i < len(instructions):
             if i != len(instructions)-1:
-                if instructions[i].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall', 'While Do', 'If']:
+                if instructions[i].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall', 'While Do', 'Repeat Until', 'If']:
                     if i == 0:
                         instructions[i].first_jump = instructions[i+1]
                     else:
@@ -465,7 +518,7 @@ class BasicBlocks(BasicBlock):
                 instructions[i].previous = instructions[i-1]
 
             if i != len(instructions)-1:
-                if instructions[i].type_of_instruction in ['While Do'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall', 'While Do', 'If']:
+                if instructions[i].type_of_instruction in ['While Do'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall', 'While Do', 'Repeat Until', 'If']:
                     if i == 0:
                         instructions[i].second_jump = instructions[i+1]
                     else:
@@ -476,7 +529,18 @@ class BasicBlocks(BasicBlock):
                 instructions[i].previous = instructions[i-1]
 
             if i != len(instructions)-1:
-                if instructions[i].type_of_instruction in ['If'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall', 'While Do', 'If']:
+                if instructions[i].type_of_instruction in ['Repeat Until'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall', 'While Do', 'Repeat Until', 'If']:
+                    if i == 0:
+                        instructions[i].second_jump = instructions[i+1]
+                    else:
+                        if i+1 <= len(instructions)-1:
+                            instructions[i].second_jump = instructions[i+1]
+                            instructions[i].previous = instructions[i-1]
+            else:
+                instructions[i].previous = instructions[i-1]
+
+            if i != len(instructions)-1:
+                if instructions[i].type_of_instruction in ['If'] and instructions[i+1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall', 'While Do', 'Repeat Until', 'If']:
                     if i == 0:
                         instructions[i].second_jump = instructions[i+1]
                     else:
