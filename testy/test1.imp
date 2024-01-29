@@ -1,0 +1,10 @@
+PROGRAM IS
+a,b,c,p
+IN
+    b:=218332906;
+    c:=3527965011;
+    p:=1234577;
+    a:=b/c;
+    a:=a%p;
+    WRITE a;
+END
