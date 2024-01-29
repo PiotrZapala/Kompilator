@@ -4,6 +4,8 @@ Projekt realizowany na potrzebę kursu Języki Formalne i Techniki Translacji
 
 Autor: Piotr Zapała
 
+Wykorzystane narzędzia: Python 3.11.6, PLY 3.11
+
 Wymagania: pip3 install ply
 
 Uruchamianie:
