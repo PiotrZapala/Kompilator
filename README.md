@@ -1,6 +1,8 @@
 # Kompilator
 
-Autor: Piotr Zapała nr indeksu 261712
+Projekt realizowany na potrzebę kursy Języki Formalne i Techniki Translacji
+
+Autor: Piotr Zapała
 
 Wymagania: pip3 install ply
 
