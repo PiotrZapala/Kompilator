@@ -15,9 +15,17 @@ class Debugger:
         self.errors = []
         length_of_errors = len(self.errors)
         for i in range(len(procedures_head)):
-            if len(decl_in_procedures) != 0:
-                self.checkNameConflicts(decl_in_procedures[i], procedures_head[i])
-                self.checkPossibleErrorsInCommands(procedure_commands_array[i], decl_in_procedures[i], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])       
+            procedure_identifier = procedures_head[i]['procedure identifier']
+            declarations_for_procedure = None
+            for k in range(len(decl_in_procedures)):
+                if decl_in_procedures[k]['procedure identifier'] == procedure_identifier:
+                    declarations_for_procedure = decl_in_procedures[k]
+                    break
+            if declarations_for_procedure != None:
+                self.checkNameConflicts(declarations_for_procedure['declarations'], procedures_head[i])
+                self.checkPossibleErrorsInCommands(procedure_commands_array[i], declarations_for_procedure['declarations'], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])  
+            else:
+                self.checkPossibleErrorsInCommands(procedure_commands_array[i], [], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])     
             if len(self.errors) != 0:
                 if length_of_errors != len(self.errors):
                     print("In procedure:", "\'" + procedures_head[i]["procedure identifier"] + "\'" + " there are some issues:")
@@ -55,7 +63,7 @@ class Debugger:
                 line_number = list_of_commands[i]['line number']
                 self.checkWhetherTheCalledProcedureExistsAndWhetherItsUseIsCorrect(identifier, procedures_head, line_number, list_of_arguments, type)
                 self.checkForUndeclaredVariablesAndIfTypeIsCorrectInProcCall(declarations, arguments_declarations, identifier, list_of_arguments, procedures_head, line_number)
-
+                self.checkForExtraArgumentsInProcCall(identifier, list_of_arguments, procedures_head ,line_number)
 
             elif list_of_commands[i]["command type"] == "While Do":                   
                 condition = list_of_commands[i]["condition"]
@@ -95,7 +103,22 @@ class Debugger:
                 else:
                     self.checkForUndeclaredVariablesInCondition(declarations, arguments_declarations, left_side, right_side, operator, line_number)
                     self.checkPossibleErrorsInCommands(if_commands, declarations, head, procedures_head, type)
-       
+    
+    def checkForExtraArgumentsInProcCall(self, identifier, list_of_arguments, procedures_head, line_number):
+        number_of_arguments = len(list_of_arguments)
+        for i in range(len(procedures_head)):
+            if procedures_head[i]['procedure identifier'] == identifier:
+                if number_of_arguments < len(procedures_head[i]['arguments declarations']):
+                    if len(procedures_head[i]['arguments declarations']) - number_of_arguments == 1:
+                        self.errors.append("ERROR: There is a missing argument in procedure call in line " + str(line_number))
+                    else:
+                        self.errors.append("ERROR: There are missing arguments in procedure call in line " + str(line_number))
+                elif number_of_arguments > len(procedures_head[i]['arguments declarations']):
+                    if len(procedures_head[i]['arguments declarations']) - number_of_arguments == 1:
+                        self.errors.append("ERROR: There is an extra argument in procedure call in line " + str(line_number))
+                    else:
+                        self.errors.append("ERROR: There are extra arguments in procedure call in line " + str(line_number))    
+
     def checkNameConflicts(self, decl_in_procedures,  procedures_head):
         args = []
         head = []
@@ -300,7 +323,6 @@ class Debugger:
                 elif is_correct_type == False and is_correct_type_in_proc_head == False:
                     self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an incorrect use of variable " +  "\'" + str(argument) + "\'") 
 
-
     def checkForUndeclaredVariablesInRead(self, declarations, arguments_declarations, right_side, line_number):
         if isinstance(right_side, str):
             is_declared_identifier, \
@@ -323,10 +345,15 @@ class Debugger:
             is_correct_type_identifier \
             = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier)
 
-            is_declared_index, \
-            is_passed_index_in_proc_head, \
-            is_correct_type_index \
-            = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index, True)            
+            if isinstance(index, int):
+                is_declared_index = True
+                is_passed_index_in_proc_head = True
+                is_correct_type_index = True
+            else:
+                is_declared_index, \
+                is_passed_index_in_proc_head, \
+                is_correct_type_index \
+                = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index, True)            
 
             if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
                 if is_correct_type_identifier == True:
@@ -362,10 +389,15 @@ class Debugger:
             is_correct_type_identifier \
             = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier)
 
-            is_declared_index, \
-            is_passed_index_in_proc_head, \
-            is_correct_type_index \
-            = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index, True)            
+            if isinstance(index, int):
+                is_declared_index = True
+                is_passed_index_in_proc_head = True
+                is_correct_type_index = True
+            else:
+                is_declared_index, \
+                is_passed_index_in_proc_head, \
+                is_correct_type_index \
+                = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index, True)             
 
             if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
                 if is_correct_type_identifier == True:
@@ -551,15 +583,25 @@ class Debugger:
             is_correct_type_of_identifier \
             = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier_left)
 
-            is_declared_index_left, \
-            is_passed_index_left_in_proc_head, \
-            is_correct_type_of_index \
-            = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)
+            if isinstance(index_left, int):
+                is_declared_index_left = True
+                is_passed_index_left_in_proc_head = True
+                is_correct_type_of_index = True
+            else:
+                is_declared_index_left, \
+                is_passed_index_left_in_proc_head, \
+                is_correct_type_of_index \
+                = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)
 
-            is_declared_identifier_right, \
-            is_passed_identifier_right_in_proc_head, \
-            is_correct_type \
-            = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side, True)
+            if isinstance(right_side, int):
+                is_declared_identifier_right = True
+                is_passed_identifier_right_in_proc_head = True
+                is_correct_type = True
+            else:
+                is_declared_identifier_right, \
+                is_passed_identifier_right_in_proc_head, \
+                is_correct_type \
+                = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side, True)
 
             if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                 if is_correct_type_of_identifier == True:
@@ -809,21 +851,31 @@ class Debugger:
                 is_passed_identifier_left_in_proc_head, \
                 is_correct_type_of_identifier_left \
                 = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier_left)
-                    
-                is_declared_index_left, \
-                is_passed_index_left_in_proc_head, \
-                is_correct_type_of_index_left \
-                = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)  
+
+                if isinstance(index_left, int):   
+                    is_declared_index_left = True
+                    is_passed_index_left_in_proc_head = True
+                    is_correct_type_of_index_left = True
+                else:
+                    is_declared_index_left, \
+                    is_passed_index_left_in_proc_head, \
+                    is_correct_type_of_index_left \
+                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)  
+
+                if isinstance(index_right, int):
+                    is_declared_index_right = True
+                    is_passed_index_right_in_proc_head = True
+                    is_correct_type_of_index_right = True
+                else:                  
+                    is_declared_index_right, \
+                    is_passed_index_right_in_proc_head, \
+                    is_correct_type_of_index_right \
+                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_right, True) 
 
                 is_declared_identifier_right, \
                 is_passed_identifier_right_in_proc_head, \
                 is_correct_type_of_identifier_right \
                 = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier_right)
-                    
-                is_declared_index_right, \
-                is_passed_index_right_in_proc_head, \
-                is_correct_type_of_index_right \
-                = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_right, True)                                                  
 
                 if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                     if is_correct_type_of_identifier_left == True:
@@ -858,20 +910,35 @@ class Debugger:
                     is_correct_type_of_identifier \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier_left)
                     
-                    is_declared_index_left, \
-                    is_passed_index_left_in_proc_head, \
-                    is_correct_type_of_index \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True) 
-                            
-                    is_declared_identifier_left_of_right_side, \
-                    is_passed_identifier_left_of_right_side_in_proc_head, \
-                    is_correct_type1 \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side, True)
+                    if isinstance(index_left, int):
+                        is_declared_index_left = True
+                        is_passed_index_left_in_proc_head = True
+                        is_correct_type_of_index = True
+                    else:
+                        is_declared_index_left, \
+                        is_passed_index_left_in_proc_head, \
+                        is_correct_type_of_index \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True) 
 
-                    is_declared_identifier_right_of_right_side, \
-                    is_passed_identifier_right_of_right_side_in_proc_head, \
-                    is_correct_type2 \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side, True)                                                         
+                    if isinstance(left_side_of_right_side, int):  
+                        is_declared_identifier_left_of_right_side = True
+                        is_passed_identifier_left_of_right_side_in_proc_head = True
+                        is_correct_type1 = True
+                    else:
+                        is_declared_identifier_left_of_right_side, \
+                        is_passed_identifier_left_of_right_side_in_proc_head, \
+                        is_correct_type1 \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side, True)
+
+                    if isinstance(right_side_of_right_side, int):
+                        is_declared_identifier_right_of_right_side = True
+                        is_passed_identifier_right_of_right_side_in_proc_head = True
+                        is_correct_type2 = True
+                    else:
+                        is_declared_identifier_right_of_right_side, \
+                        is_passed_identifier_right_of_right_side_in_proc_head, \
+                        is_correct_type2 \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side, True)                                                         
 
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
@@ -906,25 +973,40 @@ class Debugger:
                     is_correct_type_of_identifier \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier_left)
                     
-                    is_declared_index_left, \
-                    is_passed_index_left_in_proc_head, \
-                    is_correct_type_of_index \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)   
+                    if isinstance(index_left, int):
+                        is_declared_index_left = True
+                        is_passed_index_left_in_proc_head = True
+                        is_correct_type_of_index = True
+                    else:
+                        is_declared_index_left, \
+                        is_passed_index_left_in_proc_head, \
+                        is_correct_type_of_index \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)  
 
                     is_declared_left_side_of_right_side_identifier, \
                     is_passed_left_side_of_right_side_identifier_in_proc_head, \
                     is_correct_type_of_identifier_left \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side_identifier)
 
-                    is_declared_left_side_of_right_side_index, \
-                    is_passed_left_side_of_right_side_index_in_proc_head, \
-                    is_correct_type_of_index_left \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side_index, True) 
+                    if isinstance(left_side_of_right_side_index, int):
+                        is_declared_left_side_of_right_side_index = True
+                        is_passed_left_side_of_right_side_index_in_proc_head = True
+                        is_correct_type_of_index_left = True
+                    else:                     
+                        is_declared_left_side_of_right_side_index, \
+                        is_passed_left_side_of_right_side_index_in_proc_head, \
+                        is_correct_type_of_index_left \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side_index, True) 
 
-                    is_declared_identifier_right_of_right_side, \
-                    is_passed_identifier_right_of_right_side_in_proc_head, \
-                    is_correct_type \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side, True)                                           
+                    if isinstance(right_side_of_right_side, int):
+                        is_declared_identifier_right_of_right_side = True
+                        is_passed_identifier_right_of_right_side_in_proc_head = True
+                        is_correct_type = True
+                    else:
+                        is_declared_identifier_right_of_right_side, \
+                        is_passed_identifier_right_of_right_side_in_proc_head, \
+                        is_correct_type \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side, True)                                           
  
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
@@ -964,25 +1046,40 @@ class Debugger:
                     is_correct_type_of_identifier \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier_left)
                     
-                    is_declared_index_left, \
-                    is_passed_index_left_in_proc_head, \
-                    is_correct_type_of_index \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)    
+                    if isinstance(index_left, int):
+                        is_declared_index_left = True
+                        is_passed_index_left_in_proc_head = True
+                        is_correct_type_of_index = True
+                    else:
+                        is_declared_index_left, \
+                        is_passed_index_left_in_proc_head, \
+                        is_correct_type_of_index \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)  
 
-                    is_declared_identifier_left_of_right_side, \
-                    is_passed_identifier_left_of_right_side_in_proc_head, \
-                    is_correct_type \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side, True)                                     
+                    if isinstance(left_side_of_right_side, int):
+                        is_declared_identifier_left_of_right_side = True
+                        is_passed_identifier_left_of_right_side_in_proc_head = True
+                        is_correct_type = True
+                    else:
+                        is_declared_identifier_left_of_right_side, \
+                        is_passed_identifier_left_of_right_side_in_proc_head, \
+                        is_correct_type \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side, True)                                     
 
                     is_declared_right_side_of_right_side_identifier, \
                     is_passed_right_side_of_right_side_identifier_in_proc_head, \
                     is_correct_type_of_identifier_right \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side_identifier)
 
-                    is_declared_right_side_of_right_side_index, \
-                    is_passed_right_side_of_right_side_index_in_proc_head, \
-                    is_correct_type_of_index_right \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side_index, True)       
+                    if isinstance(right_side_of_right_side_index, int):
+                        is_declared_right_side_of_right_side_index = True
+                        is_passed_right_side_of_right_side_index_in_proc_head = True
+                        is_correct_type_of_index_right = True
+                    else:
+                        is_declared_right_side_of_right_side_index, \
+                        is_passed_right_side_of_right_side_index_in_proc_head, \
+                        is_correct_type_of_index_right \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side_index, True)       
  
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
@@ -1026,30 +1123,45 @@ class Debugger:
                     is_correct_type_of_identifier \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, identifier_left)
                     
-                    is_declared_index_left, \
-                    is_passed_index_left_in_proc_head, \
-                    is_correct_type_of_index \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)  
+                    if isinstance(index_left, int):
+                        is_declared_index_left = True
+                        is_passed_index_left_in_proc_head = True
+                        is_correct_type_of_index = True
+                    else:
+                        is_declared_index_left, \
+                        is_passed_index_left_in_proc_head, \
+                        is_correct_type_of_index \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, index_left, True)    
 
                     is_declared_left_side_of_right_side_identifier, \
                     is_passed_left_side_of_right_side_identifier_in_proc_head, \
                     is_correct_type_of_identifier_left \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side_identifier)
 
-                    is_declared_left_side_of_right_side_index, \
-                    is_passed_left_side_of_right_side_index_in_proc_head, \
-                    is_correct_type_of_index_left \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side_index, True)                            
+                    if isinstance(left_side_of_right_side_index, int):
+                        is_declared_left_side_of_right_side_index = True
+                        is_passed_left_side_of_right_side_index_in_proc_head = True
+                        is_correct_type_of_index_left = True 
+                    else:                    
+                        is_declared_left_side_of_right_side_index, \
+                        is_passed_left_side_of_right_side_index_in_proc_head, \
+                        is_correct_type_of_index_left \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, left_side_of_right_side_index, True)                            
 
                     is_declared_right_side_of_right_side_identifier, \
                     is_passed_right_side_of_right_side_identifier_in_proc_head, \
                     is_correct_type_of_identifier_right \
                     = self.checkIfArrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side_identifier)
 
-                    is_declared_right_side_of_right_side_index, \
-                    is_passed_right_side_of_right_side_index_in_proc_head, \
-                    is_correct_type_of_index_right \
-                    = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side_index, True)                              
+                    if isinstance(right_side_of_right_side_index, int):
+                        is_declared_right_side_of_right_side_index = True
+                        is_passed_right_side_of_right_side_index_in_proc_head = True
+                        is_correct_type_of_index_right = True
+                    else:
+                        is_declared_right_side_of_right_side_index, \
+                        is_passed_right_side_of_right_side_index_in_proc_head, \
+                        is_correct_type_of_index_right \
+                        = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side_index, True)                              
   
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:

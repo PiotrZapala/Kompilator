@@ -42,6 +42,7 @@ class AbstractSyntaxTree:
         procedures_array = self.root.procedures.procedures
         for procedure in procedures_array:
             if procedure.declarations != None:
+                ident = procedure.proc_head.identifier.identifier
                 declarations_array = procedure.declarations.declarations
                 line_number = procedure.declarations.line_number
                 variable_declarations_in_procedure = []
@@ -55,7 +56,7 @@ class AbstractSyntaxTree:
                         variable_declarations_in_procedure.append({"identifier" : {"identifier" : identifier, "range" :range}, "line number": line_number})
                     else:
                         raise ValueError("Invalid variable declaration type!")
-                self.variable_declarations_in_procedures.append(variable_declarations_in_procedure)
+                self.variable_declarations_in_procedures.append({'procedure identifier': ident, 'declarations': variable_declarations_in_procedure})
 
         return self.variable_declarations_in_procedures
     
