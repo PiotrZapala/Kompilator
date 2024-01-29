@@ -6,19 +6,19 @@ MUL = ["JUMP main", "GET c",  "PUT e",
       "SHR b", "JZERO 1", "GET d",
       "ADD e", "PUT d", "JUMP 1", "JUMPR h"]
 
-DIV = ["RST d", "RST e", "RST f", "RST g", "GET b", "SUB c", "JZERO 56", 
-       "GET c", "PUT g", "SHL c", "GET c", "SUB b", "JPOS 31", "INC d",
-       "JUMP 25", "SHR c", "GET d", "JZERO 53", "INC e", "DEC a", "SHL e",
-       "JPOS 35", "GET e", "ADD f", "PUT f", "RST d", "RST e", "GET b",
-       "SUB c", "JZERO 57", "PUT b", "GET g", "SUB b", "JPOS 57", "GET g",
-       "PUT c", "JUMP 23", "INC e", "ADD e", "ADD f", "PUT f", "JUMPR h"]
+DIV = ["RST d", "RST e", "RST f", "RST g", "GET c", "JZERO 58", "GET c", 
+       "SUB b", "JPOS 60", "GET c", "PUT g", "SHL c", "GET c", "SUB b",
+       "JPOS 33", "INC d", "JUMP 27", "SHR c", "GET d", "JZERO 55", "INC e",
+       "DEC a", "SHL e","JPOS 37", "GET e", "ADD f", "PUT f", "RST d", "RST e",
+       "GET b", "SUB c", "JZERO 59", "PUT b", "GET g", "SUB b", "JPOS 59", "GET g",
+       "PUT c", "JUMP 25", "INC e", "ADD e", "ADD f", "PUT f", "JUMPR h", "RST a", "PUT f", "JUMPR h"]
 
-MOD = ["RST d", "RST e", "RST f", "RST g", "GET c", "PUT g", "SHL c",
-       "GET c", "SUB b", "JPOS 70", "INC d", "JUMP 64", "SHR c", "GET d",
-       "JZERO 89", "INC e", "DEC a", "SHL e", "JPOS 74", "GET e", "ADD f",
-       "PUT f", "RST d", "RST e", "GET b", "SUB c", "JZERO 93", "PUT b",
-       "GET g", "PUT c", "JUMP 62", "GET g", "SUB b", "JPOS 96", "GET b",
-       "SUB g", "PUT f", "JUMP 98", "GET b", "PUT f", "JUMPR h"]
+MOD = ["GET c", "JZERO 104", "RST d", "RST e", "RST f", "RST g", "GET c", "PUT g",
+       "SHL c", "GET c", "SUB b", "JPOS 77", "INC d", "JUMP 71", "SHR c", "GET d",
+       "JZERO 96", "INC e", "DEC a", "SHL e", "JPOS 81", "GET e", "ADD f",
+       "PUT f", "RST d", "RST e", "GET b", "SUB c", "JZERO 100", "PUT b",
+       "GET g", "PUT c", "JUMP 69", "GET g", "SUB b", "JPOS 103", "GET b",
+       "SUB g", "PUT f", "JUMP 105", "GET b", "PUT f", "JUMPR h"]
 
 class Instructions(Enum):
     READ = "READ"
@@ -925,7 +925,7 @@ class AssemblyCode:
             assembly_code.append(Instructions.ADD.value + " " + "h")
             assembly_code.append(Instructions.PUT.value + " " + "h")
             assembly_code.append(Instructions.RST.value + " " + "d")
-            assembly_code.append(Instructions.JUMP.value + " " + "58")
+            assembly_code.append(Instructions.JUMP.value + " " + "63")
             assembly_code.append(Instructions.GET.value + " " + "f")
         elif type == '2':
             assembly_code.append(Instructions.PUT.value + " " + "b")
@@ -938,7 +938,7 @@ class AssemblyCode:
             assembly_code.append(Instructions.ADD.value + " " + "h")
             assembly_code.append(Instructions.PUT.value + " " + "h")
             assembly_code.append(Instructions.RST.value + " " + "d")
-            assembly_code.append(Instructions.JUMP.value + " " + "58")
+            assembly_code.append(Instructions.JUMP.value + " " + "63")
             assembly_code.append(Instructions.GET.value + " " + "f")
         elif type == '3':
             assembly_code.append(Instructions.PUT.value + " " + "b")
@@ -953,7 +953,7 @@ class AssemblyCode:
             assembly_code.append(Instructions.ADD.value + " " + "h")
             assembly_code.append(Instructions.PUT.value + " " + "h")
             assembly_code.append(Instructions.RST.value + " " + "d")
-            assembly_code.append(Instructions.JUMP.value + " " + "58")
+            assembly_code.append(Instructions.JUMP.value + " " + "63")
             assembly_code.append(Instructions.GET.value + " " + "f")
         return assembly_code
 
