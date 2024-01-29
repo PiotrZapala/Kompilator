@@ -6,10 +6,11 @@ from AssemblyCode import AssemblyCode
 from AbstractSyntaxTree import AbstractSyntaxTree
 
 def main():
-    if len(sys.argv) < 2:
-        print("Użycie: python3 Kompilator.py nazwa_pliku.imp")
+    if len(sys.argv) < 3:
+        print("Użycie: python3 Kompilator.py plik_wejściowy.imp plik_wyjściowy.mr")
         return
     filename = sys.argv[1]
+    output_file = sys.argv[2]
     try:
         with open(filename, "r") as file:
             data = file.read()
@@ -28,7 +29,7 @@ def main():
     DEB.programDebugger(main_commands_array, declarations_in_main, procedure_commands_array, declarations_in_procedures, procedures_head)
     BLOCKS = BasicBlocks(procedure_commands_array, main_commands_array)
     main_program_blocks, procedures_blocks = BLOCKS.createBasicBlocks()
-    ASM = AssemblyCode(main_program_blocks, declarations_in_main, procedures_blocks, declarations_in_procedures, procedures_head)
+    ASM = AssemblyCode(main_program_blocks, declarations_in_main, output_file, procedures_blocks, declarations_in_procedures, procedures_head)
     ASM.createAssemblyCode()
     
 if __name__ == "__main__":

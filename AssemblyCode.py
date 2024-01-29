@@ -43,7 +43,7 @@ class Instructions(Enum):
 
 class AssemblyCode:
 
-    def __init__(self, program_basic_blocks, declarations_in_main, procedures_basic_blocks=None, declarations_in_procedures=None, procedures_head=None):
+    def __init__(self, program_basic_blocks, declarations_in_main, output_file, procedures_basic_blocks=None, declarations_in_procedures=None, procedures_head=None):
         self.assembly_code = ""
         self.program_basic_blocks = program_basic_blocks
         self.declarations_in_main = declarations_in_main
@@ -53,6 +53,7 @@ class AssemblyCode:
         self.program_variables = {}
         self.jumps = {}
         self.global_space_counter = 0
+        self.output_file = output_file
     
     def generateNumber(self, number, register):
         assembly_code = []
@@ -125,7 +126,7 @@ class AssemblyCode:
             type = self.procedures_head[j]['procedure identifier']
             self.program_variables[type] = procedure_variables
             procedure_variables = []
-        self.writeMulDivModToFile('out.mr')
+        self.writeMulDivModToFile(self.output_file)
         for i in range(len(self.procedures_basic_blocks)):
             type = self.procedures_head[i]['procedure identifier']
             for block in self.procedures_basic_blocks[i]:
@@ -139,9 +140,9 @@ class AssemblyCode:
                         block['instructions'] = assembly_code_for_one_block
             return_block = self.createReturnFromProcedure(type)
             self.procedures_basic_blocks[i].append({'block': 'return', 'instructions': [return_block]})
-            self.writeProcedureBlocksToFile(self.procedures_basic_blocks[i], 1, 'out.mr', type)
-            self.modifyJumpInstructions('out.mr', 'out.mr', type)
-            self.updateJumpsInstructions('out.mr', type)
+            self.writeProcedureBlocksToFile(self.procedures_basic_blocks[i], 1, self.output_file, type)
+            self.modifyJumpInstructions(self.output_file, self.output_file, type)
+            self.updateJumpsInstructions(self.output_file, type)
 
         for block in self.program_basic_blocks[0]:
             assembly_code_for_one_block = self.identifyTypeOfInstructions(block, 'main')
@@ -153,10 +154,10 @@ class AssemblyCode:
                 else:
                     block['instructions'] = assembly_code_for_one_block
         self.program_basic_blocks[0].append({'block': 'end', 'instructions': [[Instructions.HALT.value]]})
-        self.writeProgramBlocksToFile(self.program_basic_blocks[0], 1, 'out.mr', 'main')
-        self.modifyJumpInstructions('out.mr', 'out.mr', 'main')
-        self.updateJumpsInstructions('out.mr', 'main')
-        self.updateJumpsToProceduresOrMain('out.mr')
+        self.writeProgramBlocksToFile(self.program_basic_blocks[0], 1, self.output_file, 'main')
+        self.modifyJumpInstructions(self.output_file, self.output_file, 'main')
+        self.updateJumpsInstructions(self.output_file, 'main')
+        self.updateJumpsToProceduresOrMain(self.output_file)
 
     def modifyJumpInstructions(self, input_file_path, output_file_path, identifier_of_procedure):
         with open(input_file_path, 'r') as file:

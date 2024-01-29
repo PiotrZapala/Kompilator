@@ -6,14 +6,6 @@ class Debugger:
 
     def programDebugger(self, main_commands_array, decl_in_main, procedure_commands_array, decl_in_procedures,  procedures_head):
         self.checkPossibleErrorsInCommands(main_commands_array, decl_in_main, None, procedures_head, 'main')
-        if len(self.errors) != 0:
-            print("In Main Program there are some issues:")
-            for k in range(len(self.errors)):
-                print(self.errors[k])
-            if len(self.errors) != 0:
-                exit(0)
-        self.errors = []
-        length_of_errors = len(self.errors)
         for i in range(len(procedures_head)):
             procedure_identifier = procedures_head[i]['procedure identifier']
             declarations_for_procedure = None
@@ -26,14 +18,6 @@ class Debugger:
                 self.checkPossibleErrorsInCommands(procedure_commands_array[i], declarations_for_procedure['declarations'], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])  
             else:
                 self.checkPossibleErrorsInCommands(procedure_commands_array[i], [], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])     
-            if len(self.errors) != 0:
-                if length_of_errors != len(self.errors):
-                    print("In procedure:", "\'" + procedures_head[i]["procedure identifier"] + "\'" + " there are some issues:")
-                for j in range(length_of_errors, len(self.errors)):
-                    print(self.errors[j])
-            length_of_errors = len(self.errors)
-        if len(self.errors) != 0:
-            exit(0)
 
     def checkPossibleErrorsInCommands(self, list_of_commands, declarations, head, procedures_head, type):
         if head != None:
@@ -110,14 +94,14 @@ class Debugger:
             if procedures_head[i]['procedure identifier'] == identifier:
                 if number_of_arguments < len(procedures_head[i]['arguments declarations']):
                     if len(procedures_head[i]['arguments declarations']) - number_of_arguments == 1:
-                        self.errors.append("ERROR: There is a missing argument in procedure call in line " + str(line_number))
+                        raise ValueError("ERROR: There is a missing argument in procedure call in line " + str(line_number))
                     else:
-                        self.errors.append("ERROR: There are missing arguments in procedure call in line " + str(line_number))
+                        raise ValueError("ERROR: There are missing arguments in procedure call in line " + str(line_number))
                 elif number_of_arguments > len(procedures_head[i]['arguments declarations']):
                     if len(procedures_head[i]['arguments declarations']) - number_of_arguments == 1:
-                        self.errors.append("ERROR: There is an extra argument in procedure call in line " + str(line_number))
+                        raise ValueError("ERROR: There is an extra argument in procedure call in line " + str(line_number))
                     else:
-                        self.errors.append("ERROR: There are extra arguments in procedure call in line " + str(line_number))    
+                        raise ValueError("ERROR: There are extra arguments in procedure call in line " + str(line_number))    
 
     def checkNameConflicts(self, decl_in_procedures,  procedures_head):
         args = []
@@ -138,7 +122,7 @@ class Debugger:
                     break
 
         if is_conflict == True:
-            self.errors.append("ERROR: There is a variable name conflict in line " + str(line_number)) 
+            raise ValueError("ERROR: There is a variable name conflict in line " + str(line_number)) 
 
     def checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(self, declarations, arguments_declarations, identifier, ident_can_be_int):
         is_declared_identifier = False
@@ -241,7 +225,7 @@ class Debugger:
                         is_procedure_exists_for_main = True
                         break
             if is_procedure_exists_for_main == False:
-                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " undeclared procedure is called") 
+                raise ValueError("ERROR: In line " + str(line_number) + " in the " + proc_call + " undeclared procedure is called") 
         else:
             for i in range(len(procedures)):
                 is_procedure_exists_for_procedure = False
@@ -258,9 +242,9 @@ class Debugger:
                         break
                     
             if is_procedure_exists_for_procedure == False and is_correct_use == False:
-                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " undeclared procedure is called") 
+                raise ValueError("ERROR: In line " + str(line_number) + " in the " + proc_call + " undeclared procedure is called") 
             elif is_procedure_exists_for_procedure == True and is_correct_use == False:
-                self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " invalid procedure is called")
+                raise ValueError("ERROR: In line " + str(line_number) + " in the " + proc_call + " invalid procedure is called")
 
     def checkForUndeclaredVariablesAndIfTypeIsCorrectInProcCall(self, declarations, arguments_declarations, identifier, list_of_arguments, procedures_head, line_number):
         proc_call = identifier + "("
@@ -319,9 +303,9 @@ class Debugger:
 
 
                 if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an undeclared variable " +  "\'" + str(argument) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an undeclared variable " +  "\'" + str(argument) + "\'") 
                 elif is_correct_type == False and is_correct_type_in_proc_head == False:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an incorrect use of variable " +  "\'" + str(argument) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + proc_call + " " + "there is an incorrect use of variable " +  "\'" + str(argument) + "\'") 
 
     def checkForUndeclaredVariablesInRead(self, declarations, arguments_declarations, right_side, line_number):
         if isinstance(right_side, str):
@@ -332,9 +316,9 @@ class Debugger:
 
             if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
                 if is_correct_type == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(right_side) + "\'" + " " + "there is an undeclared variable " +  "\'" + str(right_side) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(right_side) + "\'" + " " + "there is an undeclared variable " +  "\'" + str(right_side) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(right_side) + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")  
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(right_side) + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")  
 
         elif isinstance(right_side, dict):
             identifier = right_side["identifier"]
@@ -357,15 +341,15 @@ class Debugger:
 
             if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
                 if is_correct_type_identifier == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(identifier) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier) + "\'") 
 
             if is_declared_index == False and is_passed_index_in_proc_head == False:
                 if is_correct_type_index == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(index) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(index) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(index) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "READ " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(index) + "\'") 
 
     def checkForUndeclaredVariablesInWrite(self, declarations, arguments_declarations, right_side, line_number):
         if isinstance(right_side, str):
@@ -376,9 +360,9 @@ class Debugger:
 
             if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
                 if is_correct_type == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(right_side) + "\'" + " " + "there is an undeclared variable " +  "\'" + str(right_side) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(right_side) + "\'" + " " + "there is an undeclared variable " +  "\'" + str(right_side) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(right_side) + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")  
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(right_side) + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")  
 
         elif isinstance(right_side, dict):
             identifier = right_side["identifier"]
@@ -401,15 +385,15 @@ class Debugger:
 
             if is_declared_identifier == False and is_passed_identifier_in_proc_head == False:
                 if is_correct_type_identifier == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(identifier) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier) + "\'") 
 
             if is_declared_index == False and is_passed_index_in_proc_head == False:
                 if is_correct_type_index == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(index) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an undeclared variable " +  "\'" + str(index) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(index) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + "\'" + "WRITE " + str(identifier) + "[" +str(index) + "]" + "\'" + " " + "there is an incorrect use of array variable " +  "\'" + str(index) + "\'") 
 
     def checkForUndeclaredVariablesInCondition(self, declarations, arguments_declarations, left_side, right_side, operator, line_number):
         if isinstance(left_side, str) and (isinstance(right_side, str) or isinstance(right_side, int)):
@@ -425,14 +409,14 @@ class Debugger:
 
             if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                 if is_correct_type1 == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                    
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                    
             if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                 if is_correct_type2 == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")
 
         elif isinstance(left_side, dict) and (isinstance(right_side, str) or isinstance(right_side, int)):
             left_side_identifier = left_side["identifier"]
@@ -455,19 +439,19 @@ class Debugger:
 
             if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                 if is_correct_type_left_identifier == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side_identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side_identifier) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(left_side_identifier) + "\'")                                                   
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(left_side_identifier) + "\'")                                                   
             if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                 if is_correct_type_left_index == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(left_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(left_side_index) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_index) + "\'")
             if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                 if is_correct_type_right == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")     
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")     
 
         elif isinstance(left_side, str) and isinstance(right_side, dict):
             right_side_identifier = right_side["identifier"]
@@ -490,19 +474,19 @@ class Debugger:
 
             if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                 if is_correct_type_left == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an undeclared variable " + "\'" + str(left_side) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an undeclared variable " + "\'" + str(left_side) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'") 
             if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                 if is_correct_type_right_identifier == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an undeclared variable " +  "\'" + str(right_side_identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an undeclared variable " +  "\'" + str(right_side_identifier) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an incorrect use of integer variable " +  "\'" + str(right_side_identifier) + "\'")                                                   
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an incorrect use of integer variable " +  "\'" + str(right_side_identifier) + "\'")                                                   
             if is_declared_index_right == False and is_passed_index_right_in_proc_head == False:
                 if is_correct_type_right_index == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " + "\'" + str(right_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " + "\'" + str(right_side_index) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_index) + "\'")
 
         elif isinstance(left_side, dict) and isinstance(right_side, dict):
             left_side_identifier = left_side["identifier"]
@@ -532,24 +516,24 @@ class Debugger:
 
             if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                 if is_correct_type_left_identifier == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " +  "\'" + str(left_side_identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " +  "\'" + str(left_side_identifier) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of integer variable " +  "\'" + str(left_side_identifier) + "\'")                                                   
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of integer variable " +  "\'" + str(left_side_identifier) + "\'")                                                   
             if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                 if is_correct_type_left_index == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " + "\'" + str(left_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " + "\'" + str(left_side_index) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_index) + "\'")
             if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                 if is_correct_type_right_identifier == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an undeclared variable " +  "\'" + str(right_side_identifier) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an undeclared variable " +  "\'" + str(right_side_identifier) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an incorrect use of integer variable " +  "\'" + str(right_side_identifier) + "\'")                                                   
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]"  + " " + "there is an incorrect use of integer variable " +  "\'" + str(right_side_identifier) + "\'")                                                   
             if is_declared_index_right == False and is_passed_index_right_in_proc_head == False:
                 if is_correct_type_right_index == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " + "\'" + str(right_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an undeclared variable " + "\'" + str(right_side_index) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_index) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side_identifier) +  "[" + str(left_side_index) + "]" + str(operator) + str(right_side_identifier) +  "[" + str(right_side_index) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_index) + "\'")
 
     def checkForUndeclaredVariablesInAssign(self, declarations, arguments_declarations, left_side, right_side, line_number):
         if isinstance(left_side, str) and (isinstance(right_side, str) or isinstance(right_side, int)):
@@ -565,14 +549,14 @@ class Debugger:
 
             if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                 if is_correct_type1 == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'") 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'") 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                    
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                    
             if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                 if is_correct_type2 == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")      
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) +  ":=" + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side) + "\'")      
 
         elif isinstance(left_side, dict) and (isinstance(right_side, str) or isinstance(right_side, int)):
             identifier_left = left_side["identifier"]
@@ -605,19 +589,19 @@ class Debugger:
 
             if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                 if is_correct_type_of_identifier == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array")    
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array")    
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")               
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")               
             if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                 if is_correct_type_of_index == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " " + "of an array" ) 
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " " + "of an array" ) 
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                                      
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                                      
             if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                 if is_correct_type == True:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side) + "\'")
                 else:
-                    self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(right_side) + "\'")
+                    raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(right_side) + "\'")
 
         elif isinstance(left_side, str) and isinstance(right_side, dict):
             if len(right_side) == 2:
@@ -641,19 +625,19 @@ class Debugger:
 
                 if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                     if is_correct_type == True:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared variable " + "\'" + str(left_side) + "\'")
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared variable " + "\'" + str(left_side) + "\'")
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " + "\'" + str(left_side) + "\'")                        
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " + "\'" + str(left_side) + "\'")                        
                 if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                     if is_correct_type_of_identifier == True:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared identifier " +  "\'" + str(identifier_right) + "\'" + " of an array")  
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared identifier " +  "\'" + str(identifier_right) + "\'" + " of an array")  
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_right) + "\'")                  
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_right) + "\'")                  
                 if is_declared_index_right == False and is_passed_index_right_in_proc_head == False:
                     if is_correct_type_of_index == True:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared index " +  "\'" + str(index_right) + "\'" + " " + "of an array")   
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared index " +  "\'" + str(index_right) + "\'" + " " + "of an array")   
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_right) + "\'") 
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_right) + "\'") 
 
             elif len(right_side) == 3:
                 left_side_of_right_side = right_side["left"]
@@ -676,19 +660,19 @@ class Debugger:
                     = self.checkIfStrIdentIsDeclaredAndIfTypeIsCorrect(declarations, arguments_declarations, right_side_of_right_side, True)                            
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type1 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")     
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")     
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                                             
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                                             
                     if is_declared_identifier_left_of_right_side == False and is_passed_identifier_left_of_right_side_in_proc_head == False:
                         if is_correct_type2 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(left_side_of_right_side) + "\'")   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(left_side_of_right_side) + "\'")   
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side) + "\'")                                                               
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side) + "\'")                                                               
                     if is_declared_identifier_right_of_right_side == False and is_passed_identifier_right_of_right_side_in_proc_head == False:
                         if is_correct_type3 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side_of_right_side) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side_of_right_side) + "\'")
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side) + "\'")                            
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side) + "\'")                            
 
                 elif isinstance(left_side_of_right_side, dict) and (isinstance(right_side_of_right_side, str) or isinstance(right_side_of_right_side, int)):
                     left_side_of_right_side_identifier = left_side_of_right_side["identifier"]
@@ -716,24 +700,24 @@ class Debugger:
  
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type1:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")  
                         else: 
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                                                
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")                                                                                
                     if is_declared_left_side_of_right_side_identifier == False and is_passed_left_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                                
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                                
                     if is_declared_left_side_of_right_side_index == False and is_passed_left_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" + " of an array")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" + " of an array")  
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                        
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                        
                     if is_declared_identifier_right_of_right_side == False and is_passed_identifier_right_of_right_side_in_proc_head == False:
                         if is_correct_type2 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(right_side_of_right_side) + "\'") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(right_side_of_right_side) + "\'") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_of_right_side) + "\'")                            
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_of_right_side) + "\'")                            
 
                 elif (isinstance(left_side_of_right_side, str) or isinstance(left_side_of_right_side, int)) and isinstance(right_side_of_right_side, dict):  
                     right_side_of_right_side_identifier = right_side_of_right_side["identifier"]
@@ -761,24 +745,24 @@ class Debugger:
 
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type1 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")   
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")  
                     if is_declared_identifier_left_of_right_side == False and is_passed_identifier_left_of_right_side_in_proc_head == False:
                         if is_correct_type2 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side_of_right_side) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side_of_right_side) + "\'")
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_of_right_side) + "\'")                                                                                                          
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_of_right_side) + "\'")                                                                                                          
                     if is_declared_right_side_of_right_side_identifier == False and is_passed_right_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array")  
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                               
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                               
                     if is_declared_right_side_of_right_side_index == False and is_passed_right_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array")   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array")   
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")                                                       
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")                                                       
                 elif isinstance(left_side_of_right_side, dict) and isinstance(right_side_of_right_side, dict):
                     is_declared_identifier_left = False
 
@@ -816,29 +800,29 @@ class Debugger:
      
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")     
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side) + "\'")     
                         else:                                     
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side) + "\'")
                     if is_declared_left_side_of_right_side_identifier == False and is_passed_left_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier_left == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array")       
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array")       
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                          
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                          
                     if is_declared_left_side_of_right_side_index == False and is_passed_left_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index_left == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" " of an array")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" " of an array")
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                              
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                              
                     if is_declared_right_side_of_right_side_identifier == False and is_passed_right_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier_right == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                                
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                                
                     if is_declared_right_side_of_right_side_index == False and is_passed_right_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index_right == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array")
                         else:                                                                                       
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(left_side) + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")
         elif isinstance(left_side, dict) and isinstance(right_side, dict):
             if len(right_side) == 2:
                 identifier_left = left_side["identifier"]
@@ -879,24 +863,24 @@ class Debugger:
 
                 if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                     if is_correct_type_of_identifier_left == True:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared identifier "  +  "\'" + str(identifier_left) + "\'" " of an array")
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared identifier "  +  "\'" + str(identifier_left) + "\'" " of an array")
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of integer variable "  +  "\'" + str(identifier_left) + "\'")                        
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of integer variable "  +  "\'" + str(identifier_left) + "\'")                        
                 if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                     if is_correct_type_of_index_left == True:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " " + "of an array") 
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " " + "of an array") 
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                        
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                        
                 if is_declared_identifier_right == False and is_passed_identifier_right_in_proc_head == False:
                     if is_correct_type_of_identifier_right == True:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared identifier "  +  "\'" + str(identifier_right) + "\'" " of an array")   
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared identifier "  +  "\'" + str(identifier_right) + "\'" " of an array")   
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of integer variable "  +  "\'" + str(identifier_right) + "\'")                                        
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of integer variable "  +  "\'" + str(identifier_right) + "\'")                                        
                 if is_declared_index_right == False and is_passed_index_right_in_proc_head == False:
                     if is_correct_type_of_index_right == True:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared index " +  "\'" + str(index_right) + "\'" + " " + "of an array")
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an undeclared index " +  "\'" + str(index_right) + "\'" + " " + "of an array")
                     else:
-                        self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_right) + "\'")   
+                        raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(identifier_right) +  "[" +str(index_right) + "]" + " " + "there is an incorrect use of array variable " +  "\'" + str(index_right) + "\'")   
                                              
             elif len(right_side) == 3:
                 left_side_of_right_side = right_side["left"]
@@ -942,24 +926,24 @@ class Debugger:
 
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array")
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                               
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                               
                     if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                         if is_correct_type_of_index == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " of an array")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " of an array")  
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'" + " of an array")                                                                                                                
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'" + " of an array")                                                                                                                
                     if is_declared_identifier_left_of_right_side == False and is_passed_identifier_left_of_right_side_in_proc_head == False:
                         if is_correct_type1 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(left_side_of_right_side) + "\'") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(left_side_of_right_side) + "\'") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side) + "\'")                                                                 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side) + "\'")                                                                 
                     if is_declared_identifier_right_of_right_side == False and is_passed_identifier_right_of_right_side_in_proc_head == False:
                         if is_correct_type2 == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side_of_right_side) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " + "\'" + str(right_side_of_right_side) + "\'")
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side) + "\'")                            
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side) + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side) + "\'")                            
 
                 elif isinstance(left_side_of_right_side, dict) and (isinstance(right_side_of_right_side, str) or isinstance(right_side_of_right_side, int)):
                     left_side_of_right_side_identifier = left_side_of_right_side["identifier"]
@@ -1010,29 +994,29 @@ class Debugger:
  
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                            
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                            
                     if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                         if is_correct_type_of_index_left == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " of an array")   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " of an array")   
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                                                                                                                
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                                                                                                                
                     if is_declared_left_side_of_right_side_identifier == False and is_passed_left_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier_left == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array")     
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array")     
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                            
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                            
                     if is_declared_left_side_of_right_side_index == False and is_passed_left_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index_left == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" + " of an array")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" + " of an array")  
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                        
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                        
                     if is_declared_identifier_right_of_right_side == False and is_passed_identifier_right_of_right_side_in_proc_head == False:
                         if is_correct_type == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(right_side_of_right_side) + "\'") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an undeclared variable " +  "\'" + str(right_side_of_right_side) + "\'") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_of_right_side) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"])  + str(right_side_of_right_side) + " " + "there is an incorrect use of array variable " +  "\'" + str(right_side_of_right_side) + "\'")
 
                 elif (isinstance(left_side_of_right_side, str) or isinstance(left_side_of_right_side, int)) and isinstance(right_side_of_right_side, dict):  
                     right_side_of_right_side_identifier = right_side_of_right_side["identifier"]
@@ -1083,29 +1067,29 @@ class Debugger:
  
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                            
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                            
                     if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                         if is_correct_type_of_index == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " of an array")    
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " +  "\'" + str(index_left) + "\'" + " of an array")    
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                            
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(index_left) + "\'")                            
                     if is_declared_identifier_left_of_right_side == False and is_passed_identifier_left_of_right_side_in_proc_head == False:
                         if is_correct_type == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side_of_right_side) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared variable " +  "\'" + str(left_side_of_right_side) + "\'")
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_of_right_side) + "\'")                                                                   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " +  "\'" + str(left_side_of_right_side) + "\'")                                                                   
                     if is_declared_right_side_of_right_side_identifier == False and is_passed_right_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier_right == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                                
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                                
                     if is_declared_right_side_of_right_side_index == False and is_passed_right_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index_right == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array")   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array")   
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")                                                       
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side)  + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")                                                       
 
                 elif isinstance(left_side_of_right_side, dict) and isinstance(right_side_of_right_side, dict):
 
@@ -1165,32 +1149,32 @@ class Debugger:
   
                     if is_declared_identifier_left == False and is_passed_identifier_left_in_proc_head == False:
                         if is_correct_type_of_identifier == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " +  "\'" + str(identifier_left) + "\'" + " of an array")  
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                             
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " +  "\'" + str(identifier_left) + "\'")                             
                     if is_declared_index_left == False and is_passed_index_left_in_proc_head == False:
                         if is_correct_type_of_index == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(index_left) + "\'" + " of an array")    
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(index_left) + "\'" + " of an array")    
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(index_left) + "\'")  
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(index_left) + "\'")  
                     if is_declared_left_side_of_right_side_identifier == False and is_passed_left_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier_left == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array")   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(left_side_of_right_side_identifier) + "\'" + " of an array")   
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                               
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(left_side_of_right_side_identifier) + "\'")                                                               
                     if is_declared_left_side_of_right_side_index == False and is_passed_left_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index_left == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" + " of an array")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(left_side_of_right_side_index) + "\'" + " of an array")
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                                                                                                                    
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(left_side_of_right_side_index) + "\'")                                                                                                                                                    
                     if is_declared_right_side_of_right_side_identifier == False and is_passed_right_side_of_right_side_identifier_in_proc_head == False:
                         if is_correct_type_of_identifier_right == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array")   
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared identifier " + "\'" + str(right_side_of_right_side_identifier) + "\'" + " of an array")   
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                              
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of integer variable " + "\'" + str(right_side_of_right_side_identifier) + "\'")                                                              
                     if is_declared_right_side_of_right_side_index == False and is_passed_right_side_of_right_side_index_in_proc_head == False:
                         if is_correct_type_of_index_right == True:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array") 
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an undeclared index " + "\'" + str(right_side_of_right_side_index) + "\'" + " of an array") 
                         else:
-                            self.errors.append("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")
+                            raise ValueError("ERROR: In line " + str(line_number) + " in the " + str(identifier_left) + "[" +str(index_left) + "]" + ":=" + str(left_side_of_right_side_identifier) +  "[" +str(left_side_of_right_side_index) + "]" + str(right_side["operator"]) + str(right_side_of_right_side_identifier) +  "[" +str(right_side_of_right_side_index) + "]" +  " " + "there is an incorrect use of array variable " + "\'" + str(right_side_of_right_side_index) + "\'")
     
