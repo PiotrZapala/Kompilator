@@ -89,20 +89,26 @@ class AssemblyCode:
         self.program_variables['main'] = main_variables
         for j in range(len(self.procedures_head)):
             proc_decl = []
-            if len(self.declarations_in_procedures) > 0:
-                for i in range(len(self.declarations_in_procedures[j])):
+            procedure_identifier = self.procedures_head[j]['procedure identifier']
+            declarations_for_procedure = None
+            for k in range(len(self.declarations_in_procedures)):
+                if self.declarations_in_procedures[k]['procedure identifier'] == procedure_identifier:
+                    declarations_for_procedure =  self.declarations_in_procedures[k]
+                    break
+            if declarations_for_procedure != None:
+                for i in range(len(declarations_for_procedure['declarations'])):
                     variable = {}
-                    if isinstance(self.declarations_in_procedures[j][i]['identifier'], str):
-                        variable['variable_'+str(i+1)] = self.declarations_in_procedures[j][i]['identifier']
+                    if isinstance(declarations_for_procedure['declarations'][i]['identifier'], str):
+                        variable['variable_'+str(i+1)] = declarations_for_procedure['declarations'][i]['identifier']
                         variable['initialized'] = False
                         variable['place_in_memory'] = self.global_space_counter
                         self.global_space_counter += 1
-                    elif isinstance(self.declarations_in_procedures[j][i]['identifier'], dict):
-                        variable['variable_'+str(i+1)] = (self.declarations_in_procedures[j][i]['identifier']['identifier'], self.declarations_in_procedures[j][i]['identifier']['range'])
+                    elif isinstance(declarations_for_procedure['declarations'][i]['identifier'], dict):
+                        variable['variable_'+str(i+1)] = (declarations_for_procedure['declarations'][i]['identifier']['identifier'], declarations_for_procedure['declarations'][i]['identifier']['range'])
                         variable['initialized'] = False
                         variable['starts_at'] = self.global_space_counter
-                        variable['ends_at'] = self.declarations_in_procedures[j][i]['identifier']['range'] + self.global_space_counter - 1
-                        self.global_space_counter = self.global_space_counter + self.declarations_in_procedures[j][i]['identifier']['range']              
+                        variable['ends_at'] = declarations_for_procedure['declarations'][i]['identifier']['range'] + self.global_space_counter - 1
+                        self.global_space_counter = self.global_space_counter + declarations_for_procedure['declarations'][i]['identifier']['range']              
                     proc_decl.extend([variable])
             proc_head = []
             for i in range(len(self.procedures_head[j]['arguments declarations'])):
