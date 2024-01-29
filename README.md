@@ -1,6 +1,6 @@
 # Kompilator
 
-Projekt realizowany na potrzebę kursy Języki Formalne i Techniki Translacji
+Projekt realizowany na potrzebę kursu Języki Formalne i Techniki Translacji
 
 Autor: Piotr Zapała
 
