@@ -10,16 +10,22 @@ class Debugger:
             print("In Main Program there are some issues:")
             for k in range(len(self.errors)):
                 print(self.errors[k])
+            if len(self.errors) != 0:
+                exit(0)
         self.errors = []
         length_of_errors = len(self.errors)
         for i in range(len(procedures_head)):
-            self.checkNameConflicts(decl_in_procedures[i], procedures_head[i])
-            self.checkPossibleErrorsInCommands(procedure_commands_array[i], decl_in_procedures[i], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])       
+            if len(decl_in_procedures) != 0:
+                self.checkNameConflicts(decl_in_procedures[i], procedures_head[i])
+                self.checkPossibleErrorsInCommands(procedure_commands_array[i], decl_in_procedures[i], procedures_head[i], procedures_head, procedures_head[i]["procedure identifier"])       
             if len(self.errors) != 0:
-                print("In procedure:", "\'" + procedures_head[i]["procedure identifier"] + "\'" + " there are some issues:")
+                if length_of_errors != len(self.errors):
+                    print("In procedure:", "\'" + procedures_head[i]["procedure identifier"] + "\'" + " there are some issues:")
                 for j in range(length_of_errors, len(self.errors)):
                     print(self.errors[j])
             length_of_errors = len(self.errors)
+        if len(self.errors) != 0:
+            exit(0)
 
     def checkPossibleErrorsInCommands(self, list_of_commands, declarations, head, procedures_head, type):
         if head != None:
