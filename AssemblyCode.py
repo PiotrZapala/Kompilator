@@ -1,17 +1,24 @@
 from enum import Enum
 
-MUL = ["JUMP 50", "GET c",  "PUT e",
+MUL = ["JUMP main", "GET c",  "PUT e",
       "SHL c", "GET b", "SHR b",
       "JZERO 15", "SHL b", "SUB b",
       "SHR b", "JZERO 1", "GET d",
       "ADD e", "PUT d", "JUMP 1", "JUMPR h"]
 
-DIV = ["RST d", "RST e", "RST f", "RST g", "GET c", "PUT g",
-      "SHL c", "GET b", "SUB c", "JZERO 28", "INC d", "JUMP 22",
-      "SHR c", "GET d", "INC e", "JZERO 46", "DEC a", "SHL e",
-      "JPOS 32", "ADD e", "ADD f", "PUT f", "RST d", "RST e", 
-      "GET b", "SUB c", "PUT b", "GET g", "PUT c", "JUMP 20",
-      "ADD e", "ADD f", "PUT f", "JUMPR h"]
+DIV = ["RST d", "RST e", "RST f", "RST g", "GET b", "SUB c", "JZERO 56", 
+       "GET c", "PUT g", "SHL c", "GET c", "SUB b", "JPOS 31", "INC d",
+       "JUMP 25", "SHR c", "GET d", "JZERO 53", "INC e", "DEC a", "SHL e",
+       "JPOS 35", "GET e", "ADD f", "PUT f", "RST d", "RST e", "GET b",
+       "SUB c", "JZERO 57", "PUT b", "GET g", "SUB b", "JPOS 57", "GET g",
+       "PUT c", "JUMP 23", "INC e", "ADD e", "ADD f", "PUT f", "JUMPR h"]
+
+MOD = ["RST d", "RST e", "RST f", "RST g", "GET c", "PUT g", "SHL c",
+       "GET c", "SUB b", "JPOS 70", "INC d", "JUMP 64", "SHR c", "GET d",
+       "JZERO 89", "INC e", "DEC a", "SHL e", "JPOS 74", "GET e", "ADD f",
+       "PUT f", "RST d", "RST e", "GET b", "SUB c", "JZERO 93", "PUT b",
+       "GET g", "PUT c", "JUMP 62", "GET g", "SUB b", "JPOS 96", "GET b",
+       "SUB g", "PUT f", "JUMP 98", "GET b", "PUT f", "JUMPR h"]
 
 class Instructions(Enum):
     READ = "READ"
@@ -44,6 +51,7 @@ class AssemblyCode:
         self.declarations_in_procedures = declarations_in_procedures
         self.procedures_head = procedures_head
         self.program_variables = {}
+        self.jumps = {}
         self.global_space_counter = 0
     
     def generateNumber(self, number, register):
@@ -62,7 +70,6 @@ class AssemblyCode:
         self.getAssemblyCodeFromProgramBlocks()
 
     def getAssemblyCodeFromProgramBlocks(self):
-        program = []
         main_variables = []
         procedure_variables = []
         for i in range(len(self.declarations_in_main)):
@@ -80,22 +87,23 @@ class AssemblyCode:
                 self.global_space_counter = self.global_space_counter + self.declarations_in_main[i]['identifier']['range']              
             main_variables.append(variable)
         self.program_variables['main'] = main_variables
-        for j in range(len(self.declarations_in_procedures)):
+        for j in range(len(self.procedures_head)):
             proc_decl = []
-            for i in range(len(self.declarations_in_procedures[j])):
-                variable = {}
-                if isinstance(self.declarations_in_procedures[j][i]['identifier'], str):
-                    variable['variable_'+str(i+1)] = self.declarations_in_procedures[j][i]['identifier']
-                    variable['initialized'] = False
-                    variable['place_in_memory'] = self.global_space_counter
-                    self.global_space_counter += 1
-                elif isinstance(self.declarations_in_procedures[j][i]['identifier'], dict):
-                    variable['variable_'+str(i+1)] = (self.declarations_in_procedures[j][i]['identifier']['identifier'], self.declarations_in_procedures[j][i]['identifier']['range'])
-                    variable['initialized'] = False
-                    variable['starts_at'] = self.global_space_counter
-                    variable['ends_at'] = self.declarations_in_procedures[j][i]['identifier']['range'] + self.global_space_counter - 1
-                    self.global_space_counter = self.global_space_counter + self.declarations_in_procedures[j][i]['identifier']['range']              
-                proc_decl.extend([variable])
+            if len(self.declarations_in_procedures) > 0:
+                for i in range(len(self.declarations_in_procedures[j])):
+                    variable = {}
+                    if isinstance(self.declarations_in_procedures[j][i]['identifier'], str):
+                        variable['variable_'+str(i+1)] = self.declarations_in_procedures[j][i]['identifier']
+                        variable['initialized'] = False
+                        variable['place_in_memory'] = self.global_space_counter
+                        self.global_space_counter += 1
+                    elif isinstance(self.declarations_in_procedures[j][i]['identifier'], dict):
+                        variable['variable_'+str(i+1)] = (self.declarations_in_procedures[j][i]['identifier']['identifier'], self.declarations_in_procedures[j][i]['identifier']['range'])
+                        variable['initialized'] = False
+                        variable['starts_at'] = self.global_space_counter
+                        variable['ends_at'] = self.declarations_in_procedures[j][i]['identifier']['range'] + self.global_space_counter - 1
+                        self.global_space_counter = self.global_space_counter + self.declarations_in_procedures[j][i]['identifier']['range']              
+                    proc_decl.extend([variable])
             proc_head = []
             for i in range(len(self.procedures_head[j]['arguments declarations'])):
                 variable = {}
@@ -106,14 +114,15 @@ class AssemblyCode:
                 proc_head.extend([variable])
             procedure_variables.append(proc_decl)
             procedure_variables.append(proc_head)
+            procedure_variables.append([{'return address':self.global_space_counter}])
+            self.global_space_counter += 1
             type = self.procedures_head[j]['procedure identifier']
             self.program_variables[type] = procedure_variables
             procedure_variables = []
-
+        self.writeMulDivModToFile('out.mr')
         for i in range(len(self.procedures_basic_blocks)):
             type = self.procedures_head[i]['procedure identifier']
             for block in self.procedures_basic_blocks[i]:
-                print(block)
                 assembly_code_for_one_block = self.identifyTypeOfInstructions(block, type)
                 if len(assembly_code_for_one_block) >= 2:
                     block['instructions'] = [[instr for sublist in assembly_code_for_one_block for instr in sublist]]
@@ -122,6 +131,12 @@ class AssemblyCode:
                         block['instructions'] = assembly_code_for_one_block
                     else:
                         block['instructions'] = assembly_code_for_one_block
+            return_block = self.createReturnFromProcedure(type)
+            self.procedures_basic_blocks[i].append({'block': 'return', 'instructions': [return_block]})
+            self.writeProcedureBlocksToFile(self.procedures_basic_blocks[i], 1, 'out.mr', type)
+            self.modifyJumpInstructions('out.mr', 'out.mr', type)
+            self.updateJumpsInstructions('out.mr', type)
+
         for block in self.program_basic_blocks[0]:
             assembly_code_for_one_block = self.identifyTypeOfInstructions(block, 'main')
             if len(assembly_code_for_one_block) >= 2:
@@ -131,26 +146,227 @@ class AssemblyCode:
                     block['instructions'] = assembly_code_for_one_block
                 else:
                     block['instructions'] = assembly_code_for_one_block
-        
-        #ins = self.generateNumber(81, "b")
-        #for code in ins:
-            #print(code)
-        #ins = self.generateNumber(9, "c")
-        #for code in ins:
-            #print(code)
-        #for block in self.program_basic_blocks[0]:
-            #print(block)
+        self.program_basic_blocks[0].append({'block': 'end', 'instructions': [[Instructions.HALT.value]]})
+        self.writeProgramBlocksToFile(self.program_basic_blocks[0], 1, 'out.mr', 'main')
+        self.modifyJumpInstructions('out.mr', 'out.mr', 'main')
+        self.updateJumpsInstructions('out.mr', 'main')
+        self.updateJumpsToProceduresOrMain('out.mr')
 
-        #for block in self.program_basic_blocks[0]:
-            #for code in block["instructions"][0]:
-                #print(code)
-        self.writeProgramToFile()
+    def modifyJumpInstructions(self, input_file_path, output_file_path, identifier_of_procedure):
+        with open(input_file_path, 'r') as file:
+            lines = file.readlines()
+            jumps = {}
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+                line_parts = line.split()
+                if line == identifier_of_procedure:
+                    jumps[identifier_of_procedure] = i
+                    lines.pop(i)
+                    lines.pop(i)
+                if line_parts[0] == "block":
+                    jumps[line] = i
+                    lines.pop(i)
+                i += 1
+        self.jumps[identifier_of_procedure] = jumps
+        with open(output_file_path, 'w') as file:
+            for line in lines:
+                file.write(line)
+    
+    def updateJumpsInstructions(self, output_file_path, identifier):
+        jumps = self.jumps[identifier]
+
+        with open(output_file_path, 'r') as file:
+            lines = file.readlines()
+
+        for i in range(len(lines)):
+            line = lines[i].strip()
+            parts = line.split()
+
+            if len(parts) == 3 and parts[0] in ["JUMP", "JPOS", "JZERO"]:
+                block_label = parts[1] + " " + parts[2] + ":"
+                if block_label in jumps:
+                    jump_line_number = jumps[block_label]
+                    parts[1] = str(jump_line_number)
+                    lines[i] = parts[0] + " " + parts[1] + '\n'
+                elif parts[2] == "None":
+                    if identifier == 'main':
+                        jump_line_number = jumps.get('block end:', 'end')
+                    else:
+                        jump_line_number = jumps.get('block return:', 'return')
+                    lines[i] = parts[0] + " " + str(jump_line_number) + '\n'
+
+        with open(output_file_path, 'w') as file:
+            file.writelines(lines)
+
+    def updateJumpsToProceduresOrMain(self, output_file_path):
+        with open(output_file_path, 'r') as file:
+            lines = file.readlines()
+
+        for i in range(len(lines)):
+            line = lines[i].strip()
+            parts = line.split()
+
+            if len(parts) == 2 and parts[0] == "JUMP":
+                jump_identifier = parts[1]
+                if jump_identifier in self.jumps:
+                    line_number = self.jumps[jump_identifier][jump_identifier]
+                    parts[1] = str(line_number)
+                    lines[i] = ' '.join(parts) + '\n'
+
+        with open(output_file_path, 'w') as file:
+            file.writelines(lines)
+                                            
+    def writeMulDivModToFile(self, filename):
+        with open(filename, 'w') as file:
+            for instruction in MUL:
+                file.write(f"{instruction}\n")
+
+            for instruction in DIV:
+                file.write(f"{instruction}\n")
+
+            for instruction in MOD:
+                file.write(f"{instruction}\n")
+        
+    def writeProcedureBlocksToFile(self, blocks, start_block, filename, name):
+        with open(filename, 'a') as file:
+            processed_blocks = self.processBlocksInProcedure(blocks, start_block)
+            file.write(f"{name}\n")
+            for block_number, instruction_set in processed_blocks.items():
+                if block_number is not None:
+                    file.write(f"block {block_number}:\n")
+                for instruction in instruction_set:
+                    file.write(f"{instruction}\n")
+
+    def processBlocksInProcedure(self, blocks, start_block):
+        processed_blocks = {}
+        seen_blocks = set()
+        queue = [start_block]
+
+        while queue:
+            current_block = queue.pop(0)
+            block = next((b for b in blocks if b['block'] == current_block), None)
+            if not block:
+                continue
+
+            block_instructions = block['instructions'][0].copy()
+            next_block = block.get('first_jump')
+
+            if next_block is None and current_block != 'return':
+                block_instructions.append('JUMP block return')
+            elif next_block in seen_blocks:
+                block_instructions.append(f'JUMP block {next_block}')
+            elif next_block:
+                queue.append(next_block)
+
+            processed_blocks[current_block] = block_instructions
+            seen_blocks.add(current_block)
+
+        all_blocks = set(b['block'] for b in blocks)
+        missing_blocks = all_blocks - seen_blocks
+        missing_queue = list(missing_blocks)
+        while missing_queue:
+            block_num = missing_queue.pop(0)
+            if block_num in seen_blocks:
+                continue
+
+            block = next(b for b in blocks if b['block'] == block_num)
+            block_instructions = block['instructions'][0].copy()
+            first_jump = block.get('first_jump')
+
+            if first_jump is None and block_num != 'return':
+                block_instructions.append('JUMP block return')
+            elif first_jump in seen_blocks:
+                block_instructions.append(f'JUMP block {first_jump}')
+            elif first_jump:
+                if first_jump in missing_queue:
+                    missing_queue.remove(first_jump)
+                    missing_queue.insert(0, first_jump)
+
+            processed_blocks[block_num] = block_instructions
+            seen_blocks.add(block_num)
+
+        return processed_blocks
+
+    def writeProgramBlocksToFile(self, blocks, start_block, filename, name):
+        with open(filename, 'a') as file:
+            processed_blocks = self.processBlocksInProgram(blocks, start_block)
+            file.write(f"{name}\n")
+            for block_number, instruction_set in processed_blocks.items():
+                if block_number is not None:
+                    file.write(f"block {block_number}:\n")
+                for instruction in instruction_set:
+                    file.write(f"{instruction}\n")
+
+    def processBlocksInProgram(self, blocks, start_block):
+        processed_blocks = {}
+        seen_blocks = set()
+        queue = [start_block]
+
+        while queue:
+            current_block = queue.pop(0)
+            block = next((b for b in blocks if b['block'] == current_block), None)
+            if not block:
+                continue
+
+            block_instructions = block['instructions'][0].copy()
+            next_block = block.get('first_jump')
+
+            if next_block is None and current_block != 'end':
+                block_instructions.append('JUMP block end')
+            elif next_block in seen_blocks:
+                block_instructions.append(f'JUMP block {next_block}')
+            elif next_block:
+                queue.append(next_block)
+
+            processed_blocks[current_block] = block_instructions
+            seen_blocks.add(current_block)
+
+        all_blocks = set(b['block'] for b in blocks)
+        missing_blocks = all_blocks - seen_blocks
+        missing_queue = list(missing_blocks)
+        while missing_queue:
+            block_num = missing_queue.pop(0)
+            if block_num in seen_blocks:
+                continue
+
+            block = next(b for b in blocks if b['block'] == block_num)
+            block_instructions = block['instructions'][0].copy()
+            first_jump = block.get('first_jump')
+
+            if first_jump is None and block_num != 'end':
+                block_instructions.append('JUMP block end')
+            elif first_jump in seen_blocks:
+                block_instructions.append(f'JUMP block {first_jump}')
+            elif first_jump:
+                if first_jump in missing_queue:
+                    missing_queue.remove(first_jump)
+                    missing_queue.insert(0, first_jump)
+
+            processed_blocks[block_num] = block_instructions
+            seen_blocks.add(block_num)
+
+        return processed_blocks
+  
+    def createReturnFromProcedure(self, type):
+        assembly_code = []
+        return_address = self.program_variables[type][2][0]['return address']
+        assembly_code.append(Instructions.RST.value + " " + "h")
+        ins = self.generateNumber(return_address, "h")
+        if len(ins) != 0:   
+            assembly_code.extend(ins)
+        assembly_code.append(Instructions.LOAD.value + " " + "h")
+        assembly_code.append(Instructions.JUMPR.value + " " + "a")
+
+        return assembly_code
 
     def writeProgramToFile(self):
-        with open('test.mr', 'w') as file:
+        with open('test1.mr', 'w') as file:
             for code in MUL:
                 file.write(code + "\n")
             for code in DIV:
+                file.write(code + "\n")
+            for code in MOD:
                 file.write(code + "\n")
             for block in self.program_basic_blocks[0]:
                 for code in block["instructions"][0]:
@@ -614,6 +830,132 @@ class AssemblyCode:
                     assembly_code.append(Instructions.PUT.value + " " + register2)                    
 
         return assembly_code
+    
+    def getMulAssemblyCode(self, assembly_code, type):
+        if type == '1':
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "1")
+            assembly_code.append(Instructions.GET.value + " " + "d")
+        elif type == '2':
+            assembly_code.append(Instructions.PUT.value + " " + "c")
+            assembly_code.append(Instructions.GET.value + " " + "d")
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "1")
+            assembly_code.append(Instructions.GET.value + " " + "d")
+        return assembly_code
+
+    def getDivAssemblyCode(self, assembly_code, type):
+        if type == '1':
+            assembly_code.append(Instructions.PUT.value + " " + "d")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "c")
+            assembly_code.append(Instructions.GET.value + " " + "d")
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "16")
+            assembly_code.append(Instructions.GET.value + " " + "f")
+        elif type == '2':
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "16")
+            assembly_code.append(Instructions.GET.value + " " + "f")
+        elif type == '3':
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.GET.value + " " + "d")
+            assembly_code.append(Instructions.PUT.value + " " + "c")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "16")
+            assembly_code.append(Instructions.GET.value + " " + "f")
+        return assembly_code
+
+    def getModAssemblyCode(self, assembly_code, type):
+        if type == '1':
+            assembly_code.append(Instructions.PUT.value + " " + "d")
+            assembly_code.append(Instructions.GET.value + " " + "b")
+            assembly_code.append(Instructions.PUT.value + " " + "c")
+            assembly_code.append(Instructions.GET.value + " " + "d")
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "58")
+            assembly_code.append(Instructions.GET.value + " " + "f")
+        elif type == '2':
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "58")
+            assembly_code.append(Instructions.GET.value + " " + "f")
+        elif type == '3':
+            assembly_code.append(Instructions.PUT.value + " " + "b")
+            assembly_code.append(Instructions.GET.value + " " + "d")
+            assembly_code.append(Instructions.PUT.value + " " + "c")
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.PUT.value + " " + "h")
+            assembly_code.append(Instructions.RST.value + " " + "d")
+            assembly_code.append(Instructions.JUMP.value + " " + "58")
+            assembly_code.append(Instructions.GET.value + " " + "f")
+        return assembly_code
 
     def toIntegerVariableAssignIntegerVariable(self, instruction, type):
         assembly_code = []
@@ -707,37 +1049,11 @@ class AssemblyCode:
                 assembly_code.append(Instructions.SUB.value + " " + "b")
             elif instruction[3] == '*':
                 assembly_code.append(Instructions.PUT.value + " " + "c")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[3] == '/':
-                assembly_code.append(Instructions.PUT.value + " " + "d")
-                assembly_code.append(Instructions.GET.value + " " + "b")
-                assembly_code.append(Instructions.PUT.value + " " + "c")
-                assembly_code.append(Instructions.GET.value + " " + "d")
-                assembly_code.append(Instructions.PUT.value + " " + "b")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "16")
-                assembly_code.append(Instructions.GET.value + " " + "f")
-                
+                assembly_code = self.getDivAssemblyCode(assembly_code, '1')                
             elif instruction[3] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '1') 
 
         elif isinstance(instruction[2], int) and isinstance(instruction[4], str):
             assembly_code.append(Instructions.RST.value + " " + "c")
@@ -753,21 +1069,11 @@ class AssemblyCode:
                 assembly_code.append(Instructions.SUB.value + " " + "b")
             elif instruction[3] == '*':
                 assembly_code.append(Instructions.PUT.value + " " + "c")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[3] == '/':
-                pass
+                assembly_code = self.getDivAssemblyCode(assembly_code, '1')
             elif instruction[3] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '1')
 
         elif isinstance(instruction[2], str) and isinstance(instruction[4], int):
             assembly_code.append(Instructions.RST.value + " " + "c")
@@ -780,22 +1086,12 @@ class AssemblyCode:
             elif instruction[3] == '-':
                 assembly_code.append(Instructions.SUB.value + " " + "c")
             elif instruction[3] == '*':
-                assembly_code.append(Instructions.PUT.value + " " + "c")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
+                assembly_code.append(Instructions.PUT.value + " " + "b")
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[3] == '/':
-                pass
+                assembly_code = self.getDivAssemblyCode(assembly_code, '2')
             elif instruction[3] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '2')
 
         elif isinstance(instruction[2], str) and isinstance(instruction[4], str):
             assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[4], type, assembly_code, "a", "b")
@@ -806,22 +1102,12 @@ class AssemblyCode:
             elif instruction[3] == '-':
                 assembly_code.append(Instructions.SUB.value + " " + "c")
             elif instruction[3] == '*':
-                assembly_code.append(Instructions.PUT.value + " " + "c")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
+                assembly_code.append(Instructions.PUT.value + " " + "b")
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[3] == '/':
-                pass
+                assembly_code = self.getDivAssemblyCode(assembly_code, '2')
             elif instruction[3] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '2')
 
         assembly_code.append(Instructions.PUT.value + " " + "c")
         assembly_code = self.createAssemblyWhichStoresToIntegerVariable(instruction[0], type, assembly_code, "b")
@@ -847,26 +1133,11 @@ class AssemblyCode:
                 elif instruction[3] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[3] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[3] == '/':
-                    pass
-
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[3] == '%':
-                    pass          
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')        
 
             elif isinstance(instruction[2], str) and (isinstance(instruction[5], int) or isinstance(instruction[5], str)):
                 assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[2], type, assembly_code, "a", "b")
@@ -880,25 +1151,11 @@ class AssemblyCode:
                 elif instruction[3] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[3] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[3] == '/':
-                    pass
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[3] == '%':
-                    pass          
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')        
 
         elif instruction[4] in ['+', '-', '*', '/', '%']:
             if (isinstance(instruction[3], int) or isinstance(instruction[3], str)) and isinstance(instruction[5], int):
@@ -915,25 +1172,11 @@ class AssemblyCode:
                 elif instruction[4] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[4] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[4] == '/':
-                    pass
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[4] == '%':
-                    pass          
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')         
                     
             elif (isinstance(instruction[3], int) or isinstance(instruction[3], str)) and isinstance(instruction[5], str):
                 assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[5], type, assembly_code, "a", "b")
@@ -945,25 +1188,11 @@ class AssemblyCode:
                 elif instruction[4] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[4] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[4] == '/':
-                    pass
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[4] == '%':
-                    pass     
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')   
 
         assembly_code.append(Instructions.PUT.value + " " + "c")
         assembly_code = self.createAssemblyWhichStoresToIntegerVariable(instruction[0], type, assembly_code, "b")
@@ -986,25 +1215,11 @@ class AssemblyCode:
         elif instruction[4] == '-':
             assembly_code.append(Instructions.SUB.value + " " + "d")
         elif instruction[4] == '*':
-            assembly_code.append(Instructions.PUT.value + " " + "c")
-            assembly_code.append(Instructions.GET.value + " " + "d")
-            assembly_code.append(Instructions.PUT.value + " " + "b")
-            assembly_code.append(Instructions.RST.value + " " + "a")
-            assembly_code.append(Instructions.INC.value + " " + "a")
-            assembly_code.append(Instructions.SHL.value + " " + "a")
-            assembly_code.append(Instructions.SHL.value + " " + "a")
-            assembly_code.append(Instructions.INC.value + " " + "a")
-            assembly_code.append(Instructions.STRK.value + " " + "h")
-            assembly_code.append(Instructions.ADD.value + " " + "h")
-            assembly_code.append(Instructions.PUT.value + " " + "h")
-            assembly_code.append(Instructions.RST.value + " " + "d")
-            assembly_code.append(Instructions.JUMP.value + " " + "1")
-            assembly_code.append(Instructions.GET.value + " " + "d")
-
+            assembly_code = self.getMulAssemblyCode(assembly_code, '2')
         elif instruction[4] == '/':
-            pass
+            assembly_code = self.getDivAssemblyCode(assembly_code, '3')
         elif instruction[4] == '%':
-            pass  
+            assembly_code = self.getModAssemblyCode(assembly_code, '3')  
         assembly_code.append(Instructions.PUT.value + " " + "c")
         assembly_code = self.createAssemblyWhichStoresToIntegerVariable(instruction[0], type, assembly_code, "b")
         assembly_code.append(Instructions.GET.value + " " + "c")
@@ -1029,22 +1244,11 @@ class AssemblyCode:
                 assembly_code.append(Instructions.SUB.value + " " + "b")
             elif instruction[4] == '*':
                 assembly_code.append(Instructions.PUT.value + " " + "c")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
-
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[4] == '/':
-                pass
+                assembly_code = self.getDivAssemblyCode(assembly_code, '1') 
             elif instruction[4] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '1')
 
         elif isinstance(instruction[3], int) and isinstance(instruction[5], str):
             assembly_code.append(Instructions.RST.value + " " + "c")
@@ -1060,22 +1264,11 @@ class AssemblyCode:
                 assembly_code.append(Instructions.SUB.value + " " + "b")
             elif instruction[4] == '*':
                 assembly_code.append(Instructions.PUT.value + " " + "c")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
-
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[4] == '/':
-                pass
+                assembly_code = self.getDivAssemblyCode(assembly_code, '1') 
             elif instruction[4] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '1')
 
         elif isinstance(instruction[3], str) and isinstance(instruction[5], int):
             assembly_code.append(Instructions.RST.value + " " + "c")
@@ -1089,21 +1282,11 @@ class AssemblyCode:
                 assembly_code.append(Instructions.SUB.value + " " + "c")
             elif instruction[4] == '*':
                 assembly_code.append(Instructions.PUT.value + " " + "b")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[4] == '/':
-                pass
+                assembly_code = self.getDivAssemblyCode(assembly_code, '2')
             elif instruction[4] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '2')
 
         elif isinstance(instruction[3], str) and isinstance(instruction[5], str):
             assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[5], type, assembly_code, "a", "b")
@@ -1115,21 +1298,11 @@ class AssemblyCode:
                 assembly_code.append(Instructions.SUB.value + " " + "c")
             elif instruction[4] == '*':
                 assembly_code.append(Instructions.PUT.value + " " + "b")
-                assembly_code.append(Instructions.RST.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.SHL.value + " " + "a")
-                assembly_code.append(Instructions.INC.value + " " + "a")
-                assembly_code.append(Instructions.STRK.value + " " + "h")
-                assembly_code.append(Instructions.ADD.value + " " + "h")
-                assembly_code.append(Instructions.PUT.value + " " + "h")
-                assembly_code.append(Instructions.RST.value + " " + "d")
-                assembly_code.append(Instructions.JUMP.value + " " + "1")
-                assembly_code.append(Instructions.GET.value + " " + "d")
+                assembly_code = self.getMulAssemblyCode(assembly_code, '1')
             elif instruction[4] == '/':
-                pass
+                assembly_code = self.getDivAssemblyCode(assembly_code, '2')
             elif instruction[4] == '%':
-                pass
+                assembly_code = self.getModAssemblyCode(assembly_code, '2')
 
         assembly_code.append(Instructions.PUT.value + " " + "c")
         assembly_code = self.createAssemblyWhichStoresToArrayVariable(instruction[0], instruction[1], type, assembly_code, "a", "b")
@@ -1155,25 +1328,11 @@ class AssemblyCode:
                 elif instruction[4] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[4] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[4] == '/':
-                    pass
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[4] == '%':
-                    pass          
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')          
 
             elif isinstance(instruction[3], str) and (isinstance(instruction[6], int) or isinstance(instruction[6], str)):
                 assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[3], type, assembly_code, "a", "b")
@@ -1187,25 +1346,11 @@ class AssemblyCode:
                 elif instruction[4] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[4] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[4] == '/':
-                    pass
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[4] == '%':
-                    pass
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')
 
         elif instruction[5] in ['+', '-', '*', '/', '%']:
             if (isinstance(instruction[4], int) or isinstance(instruction[4], str)) and isinstance(instruction[6], int):
@@ -1222,25 +1367,11 @@ class AssemblyCode:
                 elif instruction[5] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[5] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[5] == '/':
-                    pass
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[5] == '%':
-                    pass          
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')          
                     
             elif (isinstance(instruction[4], int) or isinstance(instruction[4], str)) and isinstance(instruction[6], str):
                 assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[6], type, assembly_code, "a", "b")
@@ -1252,25 +1383,11 @@ class AssemblyCode:
                 elif instruction[5] == '-':
                     assembly_code.append(Instructions.SUB.value + " " + "d")
                 elif instruction[5] == '*':
-                    assembly_code.append(Instructions.PUT.value + " " + "c")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-                    assembly_code.append(Instructions.PUT.value + " " + "b")
-                    assembly_code.append(Instructions.RST.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.SHL.value + " " + "a")
-                    assembly_code.append(Instructions.INC.value + " " + "a")
-                    assembly_code.append(Instructions.STRK.value + " " + "h")
-                    assembly_code.append(Instructions.ADD.value + " " + "h")
-                    assembly_code.append(Instructions.PUT.value + " " + "h")
-                    assembly_code.append(Instructions.RST.value + " " + "d")
-                    assembly_code.append(Instructions.JUMP.value + " " + "1")
-                    assembly_code.append(Instructions.GET.value + " " + "d")
-
+                    assembly_code = self.getMulAssemblyCode(assembly_code, '2')
                 elif instruction[5] == '/':
-                    pass
+                    assembly_code = self.getDivAssemblyCode(assembly_code, '3')
                 elif instruction[5] == '%':
-                    pass
+                    assembly_code = self.getModAssemblyCode(assembly_code, '3')
 
         assembly_code.append(Instructions.PUT.value + " " + "c")
         assembly_code = self.createAssemblyWhichStoresToArrayVariable(instruction[0], instruction[1], type, assembly_code, "a", "b")
@@ -1293,25 +1410,11 @@ class AssemblyCode:
         elif instruction[5] == '-':
             assembly_code.append(Instructions.SUB.value + " " + "d")
         elif instruction[5] == '*':
-            assembly_code.append(Instructions.PUT.value + " " + "c")
-            assembly_code.append(Instructions.GET.value + " " + "d")
-            assembly_code.append(Instructions.PUT.value + " " + "b")
-            assembly_code.append(Instructions.RST.value + " " + "a")
-            assembly_code.append(Instructions.INC.value + " " + "a")
-            assembly_code.append(Instructions.SHL.value + " " + "a")
-            assembly_code.append(Instructions.SHL.value + " " + "a")
-            assembly_code.append(Instructions.INC.value + " " + "a")
-            assembly_code.append(Instructions.STRK.value + " " + "h")
-            assembly_code.append(Instructions.ADD.value + " " + "h")
-            assembly_code.append(Instructions.PUT.value + " " + "h")
-            assembly_code.append(Instructions.RST.value + " " + "d")
-            assembly_code.append(Instructions.JUMP.value + " " + "1")
-            assembly_code.append(Instructions.GET.value + " " + "d")
-
+            assembly_code = self.getMulAssemblyCode(assembly_code, '2')
         elif instruction[5] == '/':
-            pass
+            assembly_code = self.getDivAssemblyCode(assembly_code, '3')
         elif instruction[5] == '%':
-            pass         
+            assembly_code = self.getModAssemblyCode(assembly_code, '3')         
         assembly_code.append(Instructions.PUT.value + " " + "c")
         assembly_code = self.createAssemblyWhichStoresToArrayVariable(instruction[0], instruction[1], type, assembly_code, "a", "b")
         assembly_code.append(Instructions.GET.value + " " + "c")
@@ -1875,7 +1978,7 @@ class AssemblyCode:
                     assembly_code.append(Instructions.JZERO.value + " " + "block " + str(block['second_jump'])) 
 
                 elif isinstance(instruction[3], str):
-                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[2], type, assembly_code, "a", "b")
+                    assembly_code = self.createAssemblyWhichGetsIntegerVariableFromMemory(instruction[3], type, assembly_code, "a", "b")
                     assembly_code.append(Instructions.PUT.value + " " + "c")
                     assembly_code = self.createAssemblyWhichGetsArrayVariableFromMemory(instruction[0], instruction[1], type, assembly_code, "a", "b")
                     assembly_code.append(Instructions.GET.value + " " + "b") 
@@ -2024,29 +2127,110 @@ class AssemblyCode:
 
     def callProcedure(self, instruction, type):
         assembly_code = []
-        identifier = instruction[1]
-        arguments = instruction[2]
-        procedure_head_variables = self.program_variables[identifier][1] 
-        for i in range(len(procedure_head_variables)):
-            arg_in_proc_call = arguments[i]
-            for var in self.program_variables[type]:
-                if arg_in_proc_call in var.values():
-                    variable1 = var
-                    place_in_memory_of_variable1 = variable1['place_in_memory']
-                if isinstance(list(var.values())[0], tuple):
-                    if list(var.values())[0][0] == arg_in_proc_call:
+        if type == 'main':
+            identifier = instruction[1]
+            arguments = instruction[2]
+            procedure_head_variables = self.program_variables[identifier][1] 
+            procedure_return_address = self.program_variables[identifier][2][0]['return address']
+            for i in range(len(procedure_head_variables)):
+                arg_in_proc_call = arguments[i]
+                for var in self.program_variables[type]:
+                    if arg_in_proc_call in var.values():
                         variable1 = var
-                        place_in_memory_of_variable1 = variable1['starts_at']
-            place_in_memory_arg_in_proc_head = procedure_head_variables[i]['place_in_memory']
+                        place_in_memory_of_variable1 = variable1['place_in_memory']
+                    if isinstance(list(var.values())[0], tuple):
+                        if list(var.values())[0][0] == arg_in_proc_call:
+                            variable1 = var
+                            place_in_memory_of_variable1 = variable1['starts_at']
+                place_in_memory_arg_in_proc_head = procedure_head_variables[i]['place_in_memory']
+                assembly_code.append(Instructions.RST.value + " " + "b")
+                assembly_code.append(Instructions.RST.value + " " + "a")
+                ins = self.generateNumber(place_in_memory_arg_in_proc_head, "b")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                ins = self.generateNumber(place_in_memory_of_variable1, "a")
+                if len(ins) != 0:   
+                    assembly_code.extend(ins)
+                assembly_code.append(Instructions.STORE.value + " " + "b")
             assembly_code.append(Instructions.RST.value + " " + "b")
+            ins = self.generateNumber(procedure_return_address, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
             assembly_code.append(Instructions.RST.value + " " + "a")
-            ins = self.generateNumber(place_in_memory_arg_in_proc_head, "b")
-            if len(ins) != 0:   
-                assembly_code.extend(ins)
-            ins = self.generateNumber(place_in_memory_of_variable1, "a")
-            if len(ins) != 0:   
-                assembly_code.extend(ins)
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
             assembly_code.append(Instructions.STORE.value + " " + "b")
-        assembly_code.append(Instructions.JUMP.value + " " + "1")
+            assembly_code.append(Instructions.JUMP.value + " " + identifier)
+        else:
+            identifier = instruction[1]
+            arguments = instruction[2]
+
+            procedure_head_variables = self.program_variables[identifier][1]
+            procedure_return_address = self.program_variables[identifier][2][0]['return address']
+            if len(self.program_variables[type][0]) > 0:
+                variable1= None
+                for i in range(len(procedure_head_variables)):
+                    arg_in_proc_call = arguments[i]
+                    for var in self.program_variables[type][0]:
+                        if arg_in_proc_call in var.values():
+                            variable1 = var
+                            place_in_memory_of_variable1 = variable1['place_in_memory']
+                        if isinstance(list(var.values())[0], tuple):
+                            if list(var.values())[0][0] == arg_in_proc_call:
+                                variable1 = var
+                                place_in_memory_of_variable1 = variable1['starts_at']
+                    place_in_memory_arg_in_proc_head = procedure_head_variables[i]['place_in_memory']
+                    if variable1 != None:
+                        assembly_code.append(Instructions.RST.value + " " + "b")
+                        assembly_code.append(Instructions.RST.value + " " + "a")
+                        ins = self.generateNumber(place_in_memory_arg_in_proc_head, "b")
+                        if len(ins) != 0:   
+                            assembly_code.extend(ins)
+                        ins = self.generateNumber(place_in_memory_of_variable1, "a")
+                        if len(ins) != 0:   
+                            assembly_code.extend(ins)
+                        assembly_code.append(Instructions.STORE.value + " " + "b")
+                        variable1 = None
+            variable1 = None
+            for i in range(len(procedure_head_variables)):
+                arg_in_proc_call = arguments[i]
+                for var in self.program_variables[type][1]:
+                    if arg_in_proc_call in var.values():
+                        variable1 = var
+                        place_in_memory_of_variable1 = variable1['place_in_memory']
+                    if isinstance(list(var.values())[0], tuple):
+                        if list(var.values())[0][0] == arg_in_proc_call:
+                            variable1 = var
+                            place_in_memory_of_variable1 = variable1['starts_at']
+                place_in_memory_arg_in_proc_head = procedure_head_variables[i]['place_in_memory']
+                if variable1 != None:
+                    assembly_code.append(Instructions.RST.value + " " + "b")
+                    assembly_code.append(Instructions.RST.value + " " + "a")
+                    ins = self.generateNumber(place_in_memory_arg_in_proc_head, "b")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    ins = self.generateNumber(place_in_memory_of_variable1, "a")
+                    if len(ins) != 0:   
+                        assembly_code.extend(ins)
+                    assembly_code.append(Instructions.LOAD.value + " " + "a")    
+                    assembly_code.append(Instructions.STORE.value + " " + "b")
+                    variable1 = None
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            assembly_code.append(Instructions.RST.value + " " + "b")
+            ins = self.generateNumber(procedure_return_address, "b")
+            if len(ins) != 0:   
+                assembly_code.extend(ins)
+            assembly_code.append(Instructions.RST.value + " " + "a")
+            assembly_code.append(Instructions.INC.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.SHL.value + " " + "a")
+            assembly_code.append(Instructions.STRK.value + " " + "h")
+            assembly_code.append(Instructions.ADD.value + " " + "h")
+            assembly_code.append(Instructions.STORE.value + " " + "b")
+            assembly_code.append(Instructions.JUMP.value + " " + identifier)
 
         return assembly_code
+    
