@@ -389,7 +389,7 @@ class BasicBlocks(BasicBlock):
                 elif else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
                     else_nested_blocks[-1].first_jump = condition
                     if len(else_nested_blocks) >= 2:
-                        for i in range(len(if_nested_blocks)-1):
+                        for i in range(len(else_nested_blocks)-1):
                             if else_nested_blocks[i].type_of_instruction in ['While Do']:
                                 self.getInstructionsInWhileAndSetJumps(else_nested_blocks[i])
                             elif else_nested_blocks[i].type_of_instruction in ['Repeat Until']:
