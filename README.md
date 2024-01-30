@@ -1,28 +1,40 @@
 # Kompilator
 
-Projekt realizowany na potrzebę kursu Języki Formalne i Techniki Translacji
+## O Projekcie
 
-Autor: Piotr Zapała
+Projekt "Kompilator" został zrealizowany na potrzeby kursu _Języki Formalne i Techniki Translacji_. Jest to kompilator stworzony do obsługi prostego języka imperatywnego.
 
-Wykorzystane narzędzia: Python 3.11.6, PLY 3.11
+## Autor
 
-Wymagania: pip3 install ply
+Piotr Zapała
 
-Uruchamianie:
+## Technologie
+
+- **Język programowania:** Python 3.11.6
+- **Biblioteka:** PLY 3.11
+
+## Wymagania
+
+Aby korzystać z kompilatora, należy zainstalować wymagane pakiety za pomocą polecenia:
+pip3 install ply
+
+## Uruchamianie
+
+Kompilator jest uruchamiany z linii komend. Poniżej znajduje się przykład użycia:
 python3 Kompilator.py plik_wejściowy.imp plik_wyjściowy.mr
 
-Pliki wchodzące w skład projektu:
+## Struktura Projektu
 
-- Parser.py : parsowanie
+Projekt składa się z następujących plików:
 
-- Lexer.py : tworzenie tokenów
+- `Parser.py` - Odpowiedzialny za parsowanie.
+- `Lexer.py` - Tworzenie tokenów.
+- `Node.py` - Definicje węzłów drzewa AST (Abstract Syntax Tree).
+- `AbstractSyntaxTree.py` - Pobieranie informacji z drzewa AST.
+- `Debugger.py` - Sprawdzanie błędów w programach.
+- `BasicBlocks.py` - Tworzenie bloków bazowych programu.
+- `AssemblyCode.py` - Tworzenie kodu wynikowego.
 
-- Node.py : definicje węzłów drzewa AST
+## Licencja
 
-- AbstractSyntaxTree.py : pobieranie informacji z drzewa AST
-
-- Debugger.py : sprawdzanie błędów w programach
-
-- BasicBlocks.py : tworzenie bloków bazowych programu
-
-- AssemblyCode.py : tworzenie kodu wynikowego
+Projekt jest udostępniony na licencji XYZ. Szczegółowe informacje znajdują się w pliku LICENSE.
