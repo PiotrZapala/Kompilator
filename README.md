@@ -7,7 +7,7 @@ Jest to kompilator stworzony do obsługi prostego języka imperatywnego.
 
 ## Autor
 
-#Piotr Zapała
+# Piotr Zapała
 
 ## Technologie
 
