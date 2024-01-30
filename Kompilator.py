@@ -9,13 +9,13 @@ def main():
     if len(sys.argv) < 3:
         print("Użycie: python3 Kompilator.py plik_wejściowy.imp plik_wyjściowy.mr")
         return
-    filename = sys.argv[1]
+    input_file = sys.argv[1]
     output_file = sys.argv[2]
     try:
-        with open(filename, "r") as file:
+        with open(input_file, "r") as file:
             data = file.read()
     except FileNotFoundError:
-        print(f"Nie znaleziono pliku: {filename}")
+        print(f"Nie znaleziono pliku: {input_file}")
         return
     parser = Parser()
     parser.build()

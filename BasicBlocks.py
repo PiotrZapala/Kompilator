@@ -279,6 +279,8 @@ class BasicBlocks(BasicBlock):
                 for i in range(len(nested_blocks)-1):
                     if nested_blocks[i].type_of_instruction in ['While Do']:
                         self.getInstructionsInWhileAndSetJumps(nested_blocks[i])
+                    elif nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                        self.getInstructionsInRepeatUntilAndSetJumps(nested_blocks[i], nested_blocks[i-1]) 
                     elif nested_blocks[i].type_of_instruction in ['If']:
                         self.getInstructionsInIfAndSetJumps(nested_blocks[i])
         elif nested_blocks[-1].type_of_instruction in ['While Do']:
@@ -289,7 +291,9 @@ class BasicBlocks(BasicBlock):
             if len(nested_blocks) >= 2:
                 for i in range(len(nested_blocks)-1):
                     if nested_blocks[i].type_of_instruction in ['While Do']:
-                        self.getInstructionsInWhileAndSetJumps(nested_blocks[i])    
+                        self.getInstructionsInWhileAndSetJumps(nested_blocks[i]) 
+                    elif nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                        self.getInstructionsInRepeatUntilAndSetJumps(nested_blocks[i], nested_blocks[i-1])    
                     elif nested_blocks[i].type_of_instruction in ['If']:
                         self.getInstructionsInIfAndSetJumps(nested_blocks[i])
         elif nested_blocks[-1].type_of_instruction in ['If']:
@@ -299,6 +303,8 @@ class BasicBlocks(BasicBlock):
                 for i in range(len(nested_blocks)-1):
                     if nested_blocks[i].type_of_instruction in ['While Do']:
                         self.getInstructionsInWhileAndSetJumps(nested_blocks[i])
+                    elif nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                        self.getInstructionsInRepeatUntilAndSetJumps(nested_blocks[i], nested_blocks[i-1]) 
                     elif nested_blocks[i].type_of_instruction in ['If']:
                         self.getInstructionsInIfAndSetJumps(nested_blocks[i])
             if nested_blocks[-1].commands2 == None:
@@ -316,6 +322,8 @@ class BasicBlocks(BasicBlock):
                         for i in range(len(if_nested_blocks)-1):
                             if if_nested_blocks[i].type_of_instruction in ['While Do']:
                                 self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                            elif if_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1]) 
                             elif if_nested_blocks[i].type_of_instruction in ['If']:
                                 self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])                   
                 elif if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
@@ -324,6 +332,8 @@ class BasicBlocks(BasicBlock):
                         for i in range(len(if_nested_blocks)-1):
                             if if_nested_blocks[i].type_of_instruction in ['While Do']:
                                 self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                            elif if_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1]) 
                             elif if_nested_blocks[i].type_of_instruction in ['If']:
                                 self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])              
             else:
@@ -351,6 +361,8 @@ class BasicBlocks(BasicBlock):
                         for i in range(len(if_nested_blocks)-1):
                             if if_nested_blocks[i].type_of_instruction in ['While Do']:
                                 self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                            elif if_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1]) 
                             elif if_nested_blocks[i].type_of_instruction in ['If']:
                                 self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])                   
                 elif if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
@@ -359,6 +371,8 @@ class BasicBlocks(BasicBlock):
                         for i in range(len(if_nested_blocks)-1):
                             if if_nested_blocks[i].type_of_instruction in ['While Do']:
                                 self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                            elif if_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1]) 
                             elif if_nested_blocks[i].type_of_instruction in ['If']:
                                 self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])
                 if else_nested_blocks[-1].type_of_instruction == 'While Do':
@@ -368,6 +382,8 @@ class BasicBlocks(BasicBlock):
                         for i in range(len(else_nested_blocks)-1):
                             if else_nested_blocks[i].type_of_instruction in ['While Do']:
                                 self.getInstructionsInWhileAndSetJumps(else_nested_blocks[i])
+                            elif else_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                self.getInstructionsInRepeatUntilAndSetJumps(else_nested_blocks[i], else_nested_blocks[i-1]) 
                             elif else_nested_blocks[i].type_of_instruction in ['If']:
                                 self.getInstructionsInIfAndSetJumps(else_nested_blocks[i])                   
                 elif else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
@@ -376,6 +392,8 @@ class BasicBlocks(BasicBlock):
                         for i in range(len(if_nested_blocks)-1):
                             if else_nested_blocks[i].type_of_instruction in ['While Do']:
                                 self.getInstructionsInWhileAndSetJumps(else_nested_blocks[i])
+                            elif else_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                self.getInstructionsInRepeatUntilAndSetJumps(else_nested_blocks[i], else_nested_blocks[i-1]) 
                             elif else_nested_blocks[i].type_of_instruction in ['If']:
                                 self.getInstructionsInIfAndSetJumps(else_nested_blocks[i])                    
 
@@ -394,6 +412,8 @@ class BasicBlocks(BasicBlock):
                 for i in range(len(if_nested_blocks)-1):
                     if if_nested_blocks[i].type_of_instruction in ['While Do']:
                         self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                    elif if_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                        self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1]) 
                     elif if_nested_blocks[i].type_of_instruction in ['If']:
                         self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])  
             if condition.second_jump != None:
@@ -430,8 +450,18 @@ class BasicBlocks(BasicBlock):
                 for i in range(len(if_nested_blocks)-1):
                     if if_nested_blocks[i].type_of_instruction in ['While Do']:
                         self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                    elif if_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                        self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1]) 
                     elif if_nested_blocks[i].type_of_instruction in ['If']:
                         self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])  
+            if len(else_nested_blocks) >= 2:
+                for i in range(len(else_nested_blocks)-1):
+                    if else_nested_blocks[i].type_of_instruction in ['While Do']:
+                        self.getInstructionsInWhileAndSetJumps(else_nested_blocks[i])
+                    elif else_nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                        self.getInstructionsInRepeatUntilAndSetJumps(else_nested_blocks[i], else_nested_blocks[i-1]) 
+                    elif else_nested_blocks[i].type_of_instruction in ['If']:
+                        self.getInstructionsInIfAndSetJumps(else_nested_blocks[i]) 
 
             if if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall'] and else_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
                 if_nested_blocks[-1].first_jump = condition.second_jump

@@ -1,4 +1,5 @@
 from enum import Enum
+import warnings
 
 MUL = ["JUMP main", "GET c",  "PUT e",
       "SHL c", "GET b", "SHR b",
@@ -54,6 +55,7 @@ class AssemblyCode:
         self.jumps = {}
         self.global_space_counter = 0
         self.output_file = output_file
+        self.loop_depth = 0
     
     def generateNumber(self, number, register):
         assembly_code = []
@@ -402,6 +404,7 @@ class AssemblyCode:
             elif 'ProcCall' in instruction:
                 assembly_code = self.callProcedure(instruction, type)                
             else:
+                self.loop_depth += 1
                 if len(instruction) == 3:
                     assembly_code = self.checkConditionForTwoIntegerVariables(instruction, type, block)
                 elif len(instruction) == 4:
@@ -439,7 +442,7 @@ class AssemblyCode:
 
         return assembly_code
     
-    def createAssemblyWhichStoresToIntegerVariable(self, instruction, type, assembly_code, register):
+    def createAssemblyWhichStoresToIntegerVariable(self, instruction, type, assembly_code, register, is_read = None):
         if type == 'main':
             for var in self.program_variables[type]:
                 if instruction in var.values():
@@ -483,6 +486,11 @@ class AssemblyCode:
             for var in self.program_variables[type]:
                 if instruction in var.values():
                     variable2 = var
+            if variable2['initialized'] == False:
+                if self.loop_depth == 0:
+                    raise ValueError("ERROR: There is an uninitialized variable " + str(next(iter(variable2.values()))))
+                else:
+                    warnings.warn("WARNING: variable " + str(next(iter(variable2.values()))) + " may not be initialized!")
             place_in_memory_of_variable2 = variable2['place_in_memory']
             assembly_code.append(Instructions.RST.value + " " + register1)
             assembly_code.append(Instructions.RST.value + " " + register2)
@@ -499,6 +507,12 @@ class AssemblyCode:
                 if instruction in var.values():
                     variable2 = var
                     is_from_head = True
+            if is_from_head == False:
+                if variable2['initialized'] == False:
+                    if self.loop_depth == 0:
+                        raise ValueError("ERROR: There is an uninitialized variable " + str(next(iter(variable2.values()))))
+                    else:
+                        warnings.warn("WARNING: variable " + str(next(iter(variable2.values()))) + " may not be initialized!")
             place_in_memory_of_variable2 = variable2['place_in_memory']
             if is_from_head == False:
                 assembly_code.append(Instructions.RST.value + " " + register1)
@@ -541,6 +555,11 @@ class AssemblyCode:
                         variable2 = var
                 if variable1['initialized'] == False:
                     variable1['initialized'] = True
+                if variable2['initialized'] == False:
+                    if self.loop_depth == 0:
+                        raise ValueError("ERROR: There is an uninitialized variable " + str(next(iter(variable2.values()))))
+                    else:
+                        warnings.warn("WARNING: variable " + str(next(iter(variable2.values()))) + " may not be initialized!")
                 assembly_code.append(Instructions.RST.value + " " + register1)
                 assembly_code.append(Instructions.RST.value + " " + register2)
                 ins = self.generateNumber(variable2['place_in_memory'], register2)
@@ -602,7 +621,13 @@ class AssemblyCode:
                         is_identifier_from_head = True
                     if index in var.values():
                         variable2 = var
-                        is_index_from_head = True      
+                        is_index_from_head = True  
+                if is_index_from_head == False:
+                    if variable2['initialized'] == False:
+                        if self.loop_depth == 0:
+                            raise ValueError("ERROR: There is an uninitialized variable " + str(next(iter(variable2.values()))))
+                        else:
+                            warnings.warn("WARNING: variable " + str(next(iter(variable2.values()))) + " may not be initialized!")  
                 if is_identifier_from_head == False and is_index_from_head == False:
                     if variable1['initialized'] == False:
                         variable1['initialized'] = True
@@ -695,9 +720,11 @@ class AssemblyCode:
                             variable1 = var
                     if index in var.values():
                         variable2 = var
-
                 if variable2['initialized'] == False:
-                    raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
+                    if self.loop_depth == 0:
+                        raise ValueError("ERROR: There is an uninitialized variable " + str(next(iter(variable2.values()))))
+                    else:
+                        warnings.warn("WARNING: variable " + str(next(iter(variable2.values()))) + " may not be initialized!")
                 
                 if variable1['initialized'] == False:
                     variable1['initialized'] = True
@@ -768,10 +795,12 @@ class AssemblyCode:
                     if index in var.values():
                         variable2 = var
                         is_index_from_head = True
-                
                 if is_index_from_head == False:
                     if variable2['initialized'] == False:
-                        raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
+                        if self.loop_depth == 0:
+                            raise ValueError("ERROR: There is an uninitialized variable " + str(next(iter(variable2.values()))))
+                        else:
+                            warnings.warn("WARNING: variable " + str(next(iter(variable2.values()))) + " may not be initialized!")
 
                 if is_identifier_from_head == False and is_index_from_head == False:
                     if variable1['initialized'] == False:
@@ -2152,6 +2181,7 @@ class AssemblyCode:
                     if arg_in_proc_call in var.values():
                         variable1 = var
                         place_in_memory_of_variable1 = variable1['place_in_memory']
+                        var['initialized'] = True
                     if isinstance(list(var.values())[0], tuple):
                         if list(var.values())[0][0] == arg_in_proc_call:
                             variable1 = var
@@ -2181,7 +2211,6 @@ class AssemblyCode:
         else:
             identifier = instruction[1]
             arguments = instruction[2]
-
             procedure_head_variables = self.program_variables[identifier][1]
             procedure_return_address = self.program_variables[identifier][2][0]['return address']
             if len(self.program_variables[type][0]) > 0:
@@ -2192,6 +2221,7 @@ class AssemblyCode:
                         if arg_in_proc_call in var.values():
                             variable1 = var
                             place_in_memory_of_variable1 = variable1['place_in_memory']
+                            var['initialized'] = True
                         if isinstance(list(var.values())[0], tuple):
                             if list(var.values())[0][0] == arg_in_proc_call:
                                 variable1 = var

@@ -46,8 +46,8 @@ class Debugger:
                 list_of_arguments = list_of_commands[i]['arguments']
                 line_number = list_of_commands[i]['line number']
                 self.checkWhetherTheCalledProcedureExistsAndWhetherItsUseIsCorrect(identifier, procedures_head, line_number, list_of_arguments, type)
-                self.checkForUndeclaredVariablesAndIfTypeIsCorrectInProcCall(declarations, arguments_declarations, identifier, list_of_arguments, procedures_head, line_number)
                 self.checkForExtraArgumentsInProcCall(identifier, list_of_arguments, procedures_head ,line_number)
+                self.checkForUndeclaredVariablesAndIfTypeIsCorrectInProcCall(declarations, arguments_declarations, identifier, list_of_arguments, procedures_head, line_number)
 
             elif list_of_commands[i]["command type"] == "While Do":                   
                 condition = list_of_commands[i]["condition"]
