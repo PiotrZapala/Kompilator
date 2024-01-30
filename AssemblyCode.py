@@ -483,6 +483,8 @@ class AssemblyCode:
             for var in self.program_variables[type]:
                 if instruction in var.values():
                     variable2 = var
+            if variable2['initialized'] == False:
+                raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
             place_in_memory_of_variable2 = variable2['place_in_memory']
             assembly_code.append(Instructions.RST.value + " " + register1)
             assembly_code.append(Instructions.RST.value + " " + register2)
@@ -499,6 +501,9 @@ class AssemblyCode:
                 if instruction in var.values():
                     variable2 = var
                     is_from_head = True
+            if is_from_head == False:
+                if variable2['initialized'] == False:
+                    raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
             place_in_memory_of_variable2 = variable2['place_in_memory']
             if is_from_head == False:
                 assembly_code.append(Instructions.RST.value + " " + register1)
@@ -539,6 +544,8 @@ class AssemblyCode:
                             variable1 = var
                     if index in var.values():
                         variable2 = var
+                if variable2['initialized'] == False:
+                    raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
                 if variable1['initialized'] == False:
                     variable1['initialized'] = True
                 assembly_code.append(Instructions.RST.value + " " + register1)
@@ -604,6 +611,10 @@ class AssemblyCode:
                         variable2 = var
                         is_index_from_head = True
 
+                if is_index_from_head == False:
+                    if variable2['initialized'] == False:
+                        raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
+                
                 if is_identifier_from_head == False and is_index_from_head == False:
                     if variable1['initialized'] == False:
                         variable1['initialized'] = True
@@ -696,6 +707,10 @@ class AssemblyCode:
                             variable1 = var
                     if index in var.values():
                         variable2 = var
+
+                if variable2['initialized'] == False:
+                    raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
+                
                 if variable1['initialized'] == False:
                     variable1['initialized'] = True
                 assembly_code.append(Instructions.RST.value + " " + register1)
@@ -765,6 +780,10 @@ class AssemblyCode:
                     if index in var.values():
                         variable2 = var
                         is_index_from_head = True
+                
+                if is_index_from_head == False:
+                    if variable2['initialized'] == False:
+                        raise ValueError("ERROR: There is an uninitialized variable " + str(variable2['variable_2']))
 
                 if is_identifier_from_head == False and is_index_from_head == False:
                     if variable1['initialized'] == False:
