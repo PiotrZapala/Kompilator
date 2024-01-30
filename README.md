@@ -37,3 +37,4 @@ Projekt składa się z następujących plików:
 - `Debugger.py` - Sprawdzanie błędów w programach.
 - `BasicBlocks.py` - Tworzenie bloków bazowych programu.
 - `AssemblyCode.py` - Tworzenie kodu wynikowego.
+- `Kompilator.py` - Uruchamianie kompilatora.
