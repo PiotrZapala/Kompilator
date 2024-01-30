@@ -237,6 +237,8 @@ class BasicBlocks(BasicBlock):
                                 for i in range(len(if_nested_blocks)-1):
                                     if if_nested_blocks[i].type_of_instruction in ['While Do']:
                                         self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                                    elif nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                        self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1])  
                                     elif if_nested_blocks[i].type_of_instruction in ['If']:
                                         self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])                   
                     elif if_nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
@@ -245,9 +247,22 @@ class BasicBlocks(BasicBlock):
                             for i in range(len(if_nested_blocks)-1):
                                 if if_nested_blocks[i].type_of_instruction in ['While Do']:
                                     self.getInstructionsInWhileAndSetJumps(if_nested_blocks[i])
+                                elif nested_blocks[i].type_of_instruction in ['Repeat Until']:
+                                    self.getInstructionsInRepeatUntilAndSetJumps(if_nested_blocks[i], if_nested_blocks[i-1])  
                                 elif if_nested_blocks[i].type_of_instruction in ['If']:
                                     self.getInstructionsInIfAndSetJumps(if_nested_blocks[i])            
-
+        else:                 
+            nested_commands = condition.commands1
+            condition.commands1 = None
+            nested_instructions = self.getInstructions(nested_commands)
+            nested_blocks = self.createBlocks(nested_instructions)
+            index = self.blocks[0].index(condition)
+            self.blocks.insert(index, nested_blocks)
+            if nested_blocks[-1].type_of_instruction in ['Assign', 'Write', 'Read', 'ProcCall']:
+                condition.first_jump = nested_blocks[0]
+                nested_blocks[0].previous = previous
+                nested_blocks[-1].first_jump = condition
+                
         return nested_blocks 
 
     def getInstructionsInWhileAndSetJumps(self, condition):
@@ -476,8 +491,7 @@ class BasicBlocks(BasicBlock):
                 condition.second_jump = else_nested_blocks[0]                    
                 self.getInstructionsInIfAndSetJumps(if_nested_blocks[-1])
                 self.getInstructionsInIfAndSetJumps(else_nested_blocks[-1])                    
-                  
-    
+                     
     def getInstructions(self, list_of_commands):
         not_nested_instructions = []
         for i, command in enumerate(list_of_commands):
@@ -534,8 +548,7 @@ class BasicBlocks(BasicBlock):
                 )
 
         return not_nested_instructions
-
-        
+  
     def createBlocks(self, instructions):
         i = 0
         while i < len(instructions):

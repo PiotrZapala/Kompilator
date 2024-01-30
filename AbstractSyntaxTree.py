@@ -20,7 +20,6 @@ class AbstractSyntaxTree:
             self.list_of_procedure_commands.append(self.getListOfCommands(procedure_commands_array))
         return self.list_of_main_program_commands, self.list_of_procedure_commands
 
-
     def getVariableDeclarationsInMain(self):
         main = self.root.main
         if main.declarations != None:
@@ -148,7 +147,6 @@ class AbstractSyntaxTree:
 
         return list_of_commands
 
-
     def createAssign(self, identifier, expression):
         if expression.node_type == "Number":
             expr = expression.number
@@ -209,12 +207,10 @@ class AbstractSyntaxTree:
     
     def createConditionOrBinaryOperator(self, condition_or_expression):
         op = condition_or_expression.operator
-
         left = None
         right = None
         left_index = None
         right_index = None
-
         if condition_or_expression.left.node_type == "Number":
             left = condition_or_expression.left.number
         elif condition_or_expression.left.node_type == "Identifier" and isinstance(condition_or_expression.left.identifier, str):
